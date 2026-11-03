@@ -10,12 +10,12 @@ A collection of two-player games for phones, connected peer-to-peer.
 Both players need an Android phone running Chrome and must be connected to the same Wi-Fi network. On each phone, tap **TAP TO CONNECT** and use the camera to scan the connection codes shown on the other phone.
 
 ## Technologies
-
+- **No application server or STUN server**; the connection is peer-to-peer; both phones must be on the same wifi/hotspot.
 - **Vanilla JavaScript and HTML** power the games and connection flow; there is no framework or build step.
 - **HTML Canvas** draws the arenas, game objects, and touch controls.
 - **WebRTC data channels** carry game messages directly between phones.
 - **Data Matrix codes** exchange WebRTC connection details: `datamatrix.js` encodes them, and the browser's `BarcodeDetector` reads them through the camera.
 - **Camera APIs** (`getUserMedia`) and WebRTC require a supported browser and secure context.
-- **No application server or STUN server**; the connection is peer-to-peer; both phones must be on the same wifi/hotspot.
+
 
 
