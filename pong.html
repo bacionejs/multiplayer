@@ -1,0 +1,157 @@
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<script src="datamatrix.js"></script>
+<script src="link.js"></script>
+<script>
+// Byte Pong: a simple two-phone paddle game for the same metro Wi-Fi link setup.
+function game(link, side){
+  const W=420,H=620,PAD_W=14,PAD_H=100,R=10,MAX_BALL=8;
+  let localY=H/2, remoteY=H/2, score=[0,0], running=false, drag=0, lastSent=0;
+  let ball={x:W/2,y:H/2,vx:5,vy:3};
+
+  document.body.style="margin:0;background:#000;color:#0ff;font:16px monospace;text-align:center;user-select:none;touch-action:none";
+  const msg=element("div");
+  const canvas=element("canvas");
+  const ctx=canvas.getContext("2d");
+  const pad=element("div");
+
+  msg.style="padding:8px;min-height:1.4em";
+  canvas.width=W; canvas.height=H;
+  canvas.style="display:block;margin:0 auto;border:2px solid #0ff;background:#001";
+  pad.style="position:fixed;inset:0;touch-action:none";
+
+  const localX = side=="a" ? 24 : W-24-PAD_W;
+  const remoteX = side=="a" ? W-24-PAD_W : 24;
+  const clamp=v=>Math.max(PAD_H/2, Math.min(H-PAD_H/2, v));
+
+  function resetBall(dir=side=="a"?1:-1){
+    ball={
+      x:W/2,
+      y:H/2,
+      vx:(Math.random()*2+4) * dir,
+      vy:(Math.random()*6-3)
+    };
+  }
+
+  function startRound(){
+    running=true;
+    msg.textContent="First to 5 wins";
+    resetBall();
+  }
+
+  function sendPaddle(){
+    const y=localY;
+    if(Math.abs(y-lastSent) > 2){
+      link.send({t:"p",y});
+      lastSent=y;
+    }
+  }
+
+  function update(dt=1){
+    if(!running) return;
+
+    const localPad = {x:localX, y:localY, w:PAD_W, h:PAD_H};
+    const remotePad = {x:remoteX, y:remoteY, w:PAD_W, h:PAD_H};
+
+    ball.x += ball.vx * dt;
+    ball.y += ball.vy * dt;
+
+    if(ball.y-R < 0 || ball.y+R > H){
+      ball.vy *= -1;
+      ball.y = Math.max(R, Math.min(H-R, ball.y));
+    }
+
+    const hitLocal = ball.x-R < localX + PAD_W && ball.x+R > localX &&
+      ball.y > localY - PAD_H/2 && ball.y < localY + PAD_H/2 && ball.vx < 0;
+    const hitRemote = ball.x+R > remoteX && ball.x-R < remoteX + PAD_W &&
+      ball.y > remoteY - PAD_H/2 && ball.y < remoteY + PAD_H/2 && ball.vx > 0;
+
+    if(hitLocal){
+      const impact=(ball.y - localY) / (PAD_H/2);
+      ball.vx = Math.abs(ball.vx) + 0.3;
+      ball.vy = impact * 7;
+      ball.x = localX + PAD_W + R;
+    }
+    if(hitRemote){
+      const impact=(ball.y - remoteY) / (PAD_H/2);
+      ball.vx = -Math.abs(ball.vx) - 0.3;
+      ball.vy = impact * 7;
+      ball.x = remoteX - R;
+    }
+
+    if(ball.x < -20){
+      score[1]++;
+      msg.textContent = "They scored!";
+      if(score[1] >= 5){
+        running=false;
+        msg.textContent = "You lost :/";
+      } else {
+        resetBall(1);
+      }
+    }
+    if(ball.x > W + 20){
+      score[0]++;
+      msg.textContent = "You scored!";
+      if(score[0] >= 5){
+        running=false;
+        msg.textContent = "You win!";
+      } else {
+        resetBall(-1);
+      }
+    }
+
+    if(score[0] >= 5 || score[1] >= 5){
+      score[0]=0; score[1]=0;
+    }
+
+    sendPaddle();
+  }
+
+  function draw(){
+    ctx.fillStyle="#001"; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle="#0ff"; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke();
+
+    ctx.fillStyle="#0ff";
+    ctx.fillRect(localX, localY - PAD_H/2, PAD_W, PAD_H);
+    ctx.fillStyle="#f80";
+    ctx.fillRect(remoteX, remoteY - PAD_H/2, PAD_W, PAD_H);
+
+    ctx.fillStyle="#fff";
+    ctx.beginPath(); ctx.arc(ball.x, ball.y, R, 0, Math.PI*2); ctx.fill();
+
+    ctx.fillStyle="#0ff";
+    ctx.font="18px monospace";
+    ctx.fillText(String(score[0]), W/2 - 40, 30);
+    ctx.fillText(String(score[1]), W/2 + 20, 30);
+  }
+
+  function pointerToY(e){
+    const rect=pad.getBoundingClientRect();
+    const y = (e.clientY - rect.top);
+    localY = clamp(y);
+  }
+
+  pad.onpointerdown=e=>{drag=1; pointerToY(e); if(!running) link.ready(startRound);};
+  pad.onpointermove=e=>{if(drag) pointerToY(e)};
+  pad.onpointerup=pad.onpointercancel=()=>drag=0;
+
+  link.on=q=>{
+    if(q.t=="p" && q.y) remoteY = clamp(q.y);
+  };
+  link.onclose=()=>msg.textContent="Disconnected";
+
+  function loop(){
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  msg.textContent = "Tap to start. You are " + (side=="a" ? "blue" : "orange") + ".";
+  localY=H/2; remoteY=H/2;
+  resetBall();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+Link({title:"Byte Pong",game});
+</script>
