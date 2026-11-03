@@ -3,7 +3,7 @@
 ## Play
 
 - [Byte Cycles](https://bacionejs.github.io/multiplayer/cycles.html) — ride across the arena, leave a trail, and avoid crashing into a wall or either player's trail.
-- [Byte Tanks](https://bacionejs.github.io/multiplayer/tanks.html) — a tank duel with touch controls, shooting, and cover.
+
 
 Both players need an Android phone running Chrome and must be connected to the same Wi-Fi network. On each phone, tap **TAP TO CONNECT** and use the camera to scan the connection codes shown on the other phone.
 
