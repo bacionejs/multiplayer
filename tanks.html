@@ -1,0 +1,146 @@
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<script src="datamatrix.js"></script>
+<script src="link.js"></script>
+<script>
+// Byte Tanks: two-player, touch-controlled tank duel using the shared WebRTC link.
+function game(link,side){
+  const W=360,H=520,STEP=1000/30,MAX_HP=3,WIN_SCORE=3;
+  const me=side==="a"?0:1;
+  let world=null,phase="wait",score=[0,0],message="Tap READY when both players are connected.",lastTime=0,sendAt=0;
+  const input={dir:0,move:false,fire:false};
+  const DIRS=[[0,-1],[1,0],[0,1],[-1,0]];
+
+  document.body.style="margin:0;min-height:100vh;background:#000;color:#0ff;font:15px monospace;text-align:center;user-select:none;touch-action:none;display:flex;flex-direction:column;align-items:center";
+  const status=element("div");
+  const canvas=element("canvas");
+  const ctx=canvas.getContext("2d");
+  const controls=element("div");
+  const pad=element("div",controls);
+  const actions=element("div",controls);
+  const ready=element("button");
+
+  status.style="padding:8px;min-height:1.3em";
+  canvas.width=W;canvas.height=H;
+  canvas.style="width:min(94vw,360px);height:auto;max-height:58vh;background:#081018;border:2px solid #0a5;touch-action:none";
+  controls.style="width:min(94vw,360px);display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;touch-action:none";
+  pad.style="display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,48px);gap:3px";
+  actions.style="display:flex;flex-direction:column;gap:10px";
+  ready.textContent="READY";
+  ready.style="font: bold 18px monospace;color:#000;background:#0ff;border:0;border-radius:8px;padding:16px 28px";
+  ready.onclick=()=>{
+    if(phase==="wait"||phase==="over"){
+      phase="ready";message="Waiting for the other player...";updateStatus();link.ready(startRound);
+    }
+  };
+
+  function makeButton(text,style,fn){
+    const b=element("button",style.parent||controls);b.textContent=text;
+    b.style="font:bold 22px monospace;color:#0ff;background:#10202a;border:2px solid #087;border-radius:8px;touch-action:none;"+(style.css||"");
+    b.onpointerdown=e=>{e.preventDefault();b.setPointerCapture(e.pointerId);fn(true)};
+    const up=e=>{e.preventDefault();fn(false)};
+    b.onpointerup=up;b.onpointercancel=up;b.onlostpointercapture=()=>fn(false);
+    return b;
+  }
+  const empty=()=>{const x=element("div",pad);x.style="width:56px;height:48px"};
+  empty();
+  makeButton("▲",{parent:pad,css:"width:56px;height:48px"},v=>setMove(0,v));
+  empty();
+  makeButton("◀",{parent:pad,css:"width:56px;height:48px"},v=>setMove(3,v));
+  empty();
+  makeButton("▶",{parent:pad,css:"width:56px;height:48px"},v=>setMove(1,v));
+  empty();
+  makeButton("▼",{parent:pad,css:"width:56px;height:48px"},v=>setMove(2,v));
+  empty();
+  makeButton("FIRE",{parent:actions,css:"width:112px;height:64px;color:#fff;background:#832020;border-color:#f55"},v=>{input.fire=v;sendInput()});
+  const note=element("div",actions);note.textContent="Hold a direction to move";note.style="font:11px monospace;color:#8aa;max-width:112px";
+  controls.appendChild(ready);
+
+  function setMove(dir,down){
+    if(down){input.dir=dir;input.move=true}
+    else if(input.dir===dir)input.move=false;
+    sendInput();
+  }
+  function sendInput(){
+    if(side==="b")link.send({t:"i",i:{...input}});
+  }
+  function makeWorld(){
+    return {tanks:[
+      {x:62,y:H/2,dir:1,hp:MAX_HP,cool:0},
+      {x:W-62,y:H/2,dir:3,hp:MAX_HP,cool:0}
+    ],bullets:[],over:false,won:-1};
+  }
+  function startRound(){
+    if(side==="a"){
+      world=makeWorld();phase="run";message="Battle! First to 3 round wins.";broadcast();
+    }else{phase="run";message="Battle! First to 3 round wins."}
+    updateStatus();
+  }
+  function broadcast(){
+    if(side==="a"&&world)link.send({t:"s",w:world,score,message,phase});
+  }
+  function updateStatus(){
+    status.textContent=`${side==="a"?"CYAN":"ORANGE"}  |  YOU ${score[me]} : ${score[1-me]} THEM  |  ${message}`;
+  }
+  function step(){
+    if(side!=="a"||phase!=="run"||!world)return;
+    const inputs=[input,world.remoteInput||{dir:0,move:false,fire:false}];
+    for(let i=0;i<2;i++){
+      const tank=world.tanks[i],ctl=inputs[i],d=DIRS[ctl.dir||0];
+      if(ctl.move){tank.dir=ctl.dir; tank.x+=d[0]*2.2;tank.y+=d[1]*2.2}
+      tank.x=Math.max(22,Math.min(W-22,tank.x));tank.y=Math.max(22,Math.min(H-22,tank.y));
+      tank.cool=Math.max(0,tank.cool-1);
+      if(ctl.fire&&tank.cool===0){
+        const v=DIRS[tank.dir];world.bullets.push({x:tank.x+v[0]*22,y:tank.y+v[1]*22,vx:v[0]*5.5,vy:v[1]*5.5,owner:i});tank.cool=14;
+      }
+    }
+    // Keep the tanks from overlapping.
+    const a=world.tanks[0],b=world.tanks[1],dx=b.x-a.x,dy=b.y-a.y,dist=Math.hypot(dx,dy);
+    if(dist<34){const nx=(dx||1)/(dist||1),ny=dy/(dist||1),push=(34-dist)/2;a.x-=nx*push;a.y-=ny*push;b.x+=nx*push;b.y+=ny*push}
+    world.bullets=world.bullets.filter(q=>{
+      q.x+=q.vx;q.y+=q.vy;
+      if(q.x<0||q.y<0||q.x>W||q.y>H)return false;
+      const target=world.tanks[1-q.owner];
+      if(Math.hypot(q.x-target.x,q.y-target.y)<22){target.hp--;return false}
+      return true;
+    });
+    const defeated=world.tanks.findIndex(t=>t.hp<=0);
+    if(defeated>=0){
+      world.won=1-defeated;score[world.won]++;
+      if(score[world.won]>=WIN_SCORE){phase="over";message=`${world.won===0?"CYAN":"ORANGE"} wins the match! Tap READY to play again.`;score=[0,0]}
+      else{phase="over";message=`${world.won===0?"CYAN":"ORANGE"} wins the round. Tap READY for the next round.`}
+    }
+    broadcast();updateStatus();
+  }
+  function draw(){
+    ctx.fillStyle="#081018";ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle="#142b35";ctx.lineWidth=1;
+    for(let x=20;x<W;x+=20){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+    for(let y=20;y<H;y+=20){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+    // Fixed cover blocks add places to maneuver around.
+    ctx.fillStyle="#34434a";ctx.fillRect(145,105,70,22);ctx.fillRect(145,393,70,22);ctx.fillRect(96,238,34,44);ctx.fillRect(230,238,34,44);
+    if(world){
+      world.bullets.forEach(q=>{ctx.fillStyle=q.owner===me?"#9ff":"#fa5";ctx.beginPath();ctx.arc(q.x,q.y,5,0,Math.PI*2);ctx.fill()});
+      world.tanks.forEach((t,i)=>{
+        const color=i===0?"#0ff":"#f80",v=DIRS[t.dir];
+        ctx.save();ctx.translate(t.x,t.y);ctx.rotate(Math.atan2(v[1],v[0]));
+        ctx.fillStyle=color;ctx.fillRect(-15,-13,30,26);ctx.fillRect(0,-4,23,8);ctx.restore();
+        ctx.fillStyle="#333";ctx.fillRect(t.x-18,t.y-23,36,5);ctx.fillStyle=color;ctx.fillRect(t.x-18,t.y-23,36*Math.max(0,t.hp)/MAX_HP,5);
+      });
+    }else{ctx.fillStyle="#456";ctx.font="18px monospace";ctx.textAlign="center";ctx.fillText("WAITING FOR BATTLE",W/2,H/2)}
+  }
+  link.on=q=>{
+    if(q.t==="i"&&side==="a"&&world){world.remoteInput=q.i}
+    if(q.t==="s"&&side==="b"){
+      world=q.w;score=q.score;message=q.message;phase=q.phase;updateStatus();
+    }
+  };
+  link.onclose=()=>{phase="wait";message="Disconnected";updateStatus()};
+  updateStatus();draw();
+  function frame(now){
+    if(now-lastTime>=STEP){lastTime=now;step();draw()}
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+Link({title:"Byte Tanks",game});
+</script>
