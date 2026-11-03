@@ -15,6 +15,7 @@ Both players need an Android phone running Chrome and must be connected to the s
 - **HTML Canvas** draws the arenas, game objects, and touch controls.
 - **WebRTC data channels** carry game messages directly between phones.
 - **Data Matrix codes** exchange WebRTC connection details: `datamatrix.js` encodes them, and the browser's `BarcodeDetector` reads them through the camera.
-- **Camera APIs** (`getUserMedia`) and WebRTC require a supported browser and secure context. The connection is peer-to-peer and uses no application server or STUN server; both phones should be on the same Wi-Fi.
+- **Camera APIs** (`getUserMedia`) and WebRTC require a supported browser and secure context.
+- **No application server or STUN server**; the connection is peer-to-peer; both phones must be on the same wifi/hotspot.
 
 
