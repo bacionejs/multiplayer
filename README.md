@@ -1,4 +1,5 @@
-I eliminated the need for the usual 3 servers (signal/stun/turn) to perform peer-to-peer WebRTC by using local wifi and a camera-barcode handshake. The solution (link.js/datamatrix.js) is 4k (minified/zipped)
+Serverless multiplayer (no signal/stun/turn servers) via webrtc/camera/barcode.  
+The solution (link.js/datamatrix.js) is 4k (minified/zipped)
 
 [Try the Byte Cycles game example](https://bacionejs.github.io/multiplayer/cycles.html)
 
