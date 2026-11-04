@@ -14,7 +14,7 @@ The handshake solution (link.js/datamatrix.js) is 4k (minified/zipped).
 
 [Try the Byte Cycles game example](https://bacionejs.github.io/multiplayer/cycles.html)
 
-Each phone asks for camera access, then scans the code on the other phone.  
+Each phone asks for **camera** access, then scans the code on the other phone.  
 
 ---
 The main use case is making a simple game to play head-to-head with your family.  
