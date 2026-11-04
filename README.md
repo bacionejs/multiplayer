@@ -1,4 +1,4 @@
-<img width="300" src="https://github.com/user-attachments/assets/2c41f6ac-9863-4a3e-8e14-950b606351f9" />
+<img width="300" alt="2 phones playing game" src="https://github.com/user-attachments/assets/2c41f6ac-9863-4a3e-8e14-950b606351f9" />
 
 
 
