@@ -10,25 +10,25 @@
 //   That is typically 90-100 ASCII characters. It packs to about 85-95 codewords,
 //   which gives a symbol of roughly 36-40 modules per side.
 //   It is not meant for large data, files, or long text.
-// LIMITS: ASCII mode only (digit pairs packed). Characters above 127 are NOT supported.
-//   Square symbols only, 36x36 up to 48x48 (32x32 mapping and up), a single Reed-Solomon block, max 174 data codewords.
+// LIMITS: ASCII mode only (digit pairs packed, characters above 127 use upper shift).
+//   Square symbols only, 10x10 up to 48x48, a single Reed-Solomon block, max 174 data codewords.
 //   Longer input throws "too long". No C40, Text, X12, EDIFACT or Base 256 modes, no rectangles,
 //   no multi-block interleaving.
 // Golfed on purpose: written for AI readers, not humans. All helpers are nested inside datamatrix, so only one global exists.
 // SIZES: rows are [s = mapping matrix size, n = regions per side, data codewords, ecc codewords]. s and n stay short
 //   because they appear many times in the placement code. The symbol side is s+2n modules.
 // STAGES, in order:
-//   encode(str)             text -> data codewords (ASCII mode, digit pairs packed)
+//   encode(str)             text -> data codewords (ASCII mode, digit pairs packed, upper shift above 127)
 //   pad(data,dataLen)       fill data codewords up to the symbol capacity
 //   reedSolomon(data,eccLen) data codewords -> error-correction codewords (GF(256), poly 301)
 //   place(codewords,s)      codewords -> s x s mapping matrix (ISO 16022 Annex F module placement)
 //   frame(grid,s,n)         mapping matrix -> final grid with finder and timing patterns, returns [grid,size]
 
 function datamatrix(text){
-  const SIZES=[[32,2,86,42],[36,2,114,48],[40,2,144,56],[44,2,174,68]],
+  const SIZES=[[8,1,3,5],[10,1,5,7],[12,1,8,10],[14,1,12,12],[16,1,18,14],[18,1,22,18],[20,1,30,20],[22,1,36,24],[24,1,44,28],[28,2,62,36],[32,2,86,42],[36,2,114,48],[40,2,144,56],[44,2,174,68]],
   encode=str=>{
     const bytes=new TextEncoder().encode(str),data=[];
-    for(let i=0,cur,nxt;cur=bytes[i],nxt=bytes[i+1],i<bytes.length;i++)cur>47&&cur<58&&nxt>47&&nxt<58?(data.push(cur*10+nxt-398),i++):data.push(cur+1);
+    for(let i=0,cur,nxt;cur=bytes[i],nxt=bytes[i+1],i<bytes.length;i++)cur>47&&cur<58&&nxt>47&&nxt<58?(data.push(cur*10+nxt-398),i++):cur>127?data.push(235,cur-127):data.push(cur+1);
     return data
   },
   pad=(data,dataLen)=>{
@@ -52,6 +52,7 @@ function datamatrix(text){
     free=(r,c)=>r>=0&&c>=0&&r<s&&c<s&&grid[r][c]===undefined;
     do{
       row==s&&!col&&put([[s-1,0],[s-1,1],[s-1,2],[0,s-2],[0,s-1],[1,s-1],[2,s-1],[3,s-1]]);
+      row==s-2&&!col&&s%4&&put([[s-3,0],[s-2,0],[s-1,0],[0,s-4],[0,s-3],[0,s-2],[0,s-1],[1,s-1]]);
       row==s-2&&!col&&s%8==4&&put([[s-3,0],[s-2,0],[s-1,0],[0,s-2],[0,s-1],[1,s-1],[2,s-1],[3,s-1]]);
       row==s+4&&col==2&&!(s%8)&&put([[s-1,0],[s-1,s-1],[0,s-3],[0,s-2],[0,s-1],[1,s-3],[1,s-2],[1,s-1]]);
       do{free(row,col)&&utah(row,col);row-=2;col+=2}while(row>=0&&col<s);
@@ -70,5 +71,4 @@ function datamatrix(text){
   if(!s)throw Error("too long");
   return frame(place([...pad(data,dataLen),...reedSolomon(data,eccLen)],s),s,n)
 }
-
 
