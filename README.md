@@ -11,6 +11,7 @@ The files contain notes on how it all works.
 The handshake solution (link.js/datamatrix.js) is 4k (minified/zipped).  
 **No third-party libraries are used.**  
 **Needs two Android Chrome phones on the same wifi.**  
+Other browsers may work. It needs `BarcodeDetector` support.  
 
 [Try the Byte Cycles game example](https://bacionejs.github.io/multiplayer/cycles.html)
 
