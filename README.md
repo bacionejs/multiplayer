@@ -3,9 +3,12 @@
 
 
 
-Serverless multiplayer (no signal/stun/turn servers) via webrtc/camera/barcode.  
-The solution (link.js/datamatrix.js) is 4k (minified/zipped).  
-No third-party libraries are used.  
+Serverless multiplayer (**no** signal/stun/turn servers) via webrtc/camera/barcode.  
+The **handshake** solution (link.js/datamatrix.js) is 4k (minified/zipped).  
+**No third-party libraries are used.**  
+This project is mainly about the handshake innovation: **stripped message and a custom barcode generator** which make it tiny, self-contained and robust.  
+The game is merely a simple example to give an end-to-end explanation.  
+The files contain notes on how it all works.  
 
 [Try the Byte Cycles game example](https://bacionejs.github.io/multiplayer/cycles.html)
 
