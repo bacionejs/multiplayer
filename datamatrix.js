@@ -1,29 +1,38 @@
 // datamatrix.js: minimal Data Matrix (ECC 200) encoder, used by link.js to show the connection code.
-// Usage:  <script src="datamatrix.js"></script> (a global function, no dependencies)
+//
+// USAGE: <script src="datamatrix.js"></script> (one global function, no dependencies)
 //   const [grid,size]=datamatrix(text)
 //     text   string to encode
 //     grid   size x size array of rows, 1 = black module, including finder and timing patterns
 //     size   modules per side (no quiet zone, the caller adds the border)
-// SCALE: this is for SMALL payloads only. The input is a stripped WebRTC SDP string,
-//   fields joined by "|": type (1 char, a or o), ufrag (4 chars), pwd (24 chars),
-//   fingerprint (43 chars, base64 of a SHA-256), IP (7-15 chars, IPv4), port (up to 5 digits).
-//   That is typically 90-100 ASCII characters. It packs to about 85-95 codewords,
-//   which gives a symbol of roughly 36-40 modules per side.
-//   It is not meant for large data, files, or long text.
-// LIMITS: ASCII mode only (digit pairs packed). Characters above 127 are NOT supported.
-//   Square symbols only, 36x36 up to 48x48 (32x32 mapping and up), a single Reed-Solomon block, max 174 data codewords.
-//   Longer input throws "too long". No C40, Text, X12, EDIFACT or Base 256 modes, no rectangles,
-//   no multi-block interleaving.
-// Golfed on purpose: written for AI readers, not humans. All helpers are nested inside datamatrix, so only one global exists.
-// PLACEMENT: the corner-placement rules for tiny symbols are omitted, so this is valid only for the sizes in SIZES (36x36 to 48x48).
-// SIZES: rows are [s = mapping matrix size, n = regions per side, data codewords, ecc codewords]. s and n stay short
-//   because they appear many times in the placement code. The symbol side is s+2n modules.
+//
+// SCALE: for SMALL payloads only. The input is a stripped WebRTC SDP string, fields joined by "|":
+//   type (1 char, a or o), ufrag (4), pwd (24), fingerprint (43, base64 of a SHA-256),
+//   IP (7-15, IPv4), port (up to 5 digits).
+//   That is about 90-100 ASCII characters, which pack to about 85-95 codewords and give
+//   a symbol of 36-40 modules per side. Not meant for large data, files, or long text.
+//
+// LIMITS:
+//   ASCII mode only (digit pairs packed). Characters above 127 are NOT supported.
+//   Square symbols only, 36x36 to 48x48, one Reed-Solomon block, max 174 data codewords.
+//   Longer input throws "too long". No C40, Text, X12, EDIFACT or Base 256 modes,
+//   no rectangles, no multi-block interleaving.
+//
+// SIZES: rows are [s = mapping matrix size, n = regions per side, data codewords, ecc codewords].
+//   The symbol side is s+2n modules. s and n stay short because the placement code uses them often.
+//
+// PLACEMENT: the corner rules for tiny symbols are omitted. They never fire at the sizes in SIZES,
+//   so this placement code is valid only for 36x36 to 48x48.
+//
+// STYLE: golfed on purpose, written for AI readers, not humans. All helpers are nested inside
+//   datamatrix, so only one global exists.
+//
 // STAGES, in order:
-//   encode(str)             text -> data codewords (ASCII mode, digit pairs packed)
-//   pad(data,dataLen)       fill data codewords up to the symbol capacity
-//   reedSolomon(data,eccLen) data codewords -> error-correction codewords (GF(256), poly 301)
-//   place(codewords,s)      codewords -> s x s mapping matrix (ISO 16022 Annex F module placement)
-//   frame(grid,s,n)         mapping matrix -> final grid with finder and timing patterns, returns [grid,size]
+//   encode(str)               text -> data codewords (ASCII mode, digit pairs packed)
+//   pad(data,dataLen)         fill data codewords up to the symbol capacity
+//   reedSolomon(data,eccLen)  data codewords -> error-correction codewords (GF(256), poly 301)
+//   place(codewords,s)        codewords -> s x s mapping matrix (ISO 16022 Annex F module placement)
+//   frame(grid,s,n)           mapping matrix -> final grid with finder and timing patterns, returns [grid,size]
 
 function datamatrix(text){
   const SIZES=[[32,2,86,42],[36,2,114,48],[40,2,144,56],[44,2,174,68]],
