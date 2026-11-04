@@ -10,8 +10,8 @@ The game is merely a simple example to give an end-to-end explanation.
 The files contain notes on how it all works.  
 The handshake solution (link.js/datamatrix.js) is 4k (minified/zipped).  
 **No third-party libraries are used.**  
+**Needs two Android Chrome phones on the same wifi.**  
 
 [Try the Byte Cycles game example](https://bacionejs.github.io/multiplayer/cycles.html)
 
-**Needs two Android Chrome phones on the same wifi.**  
 Each phone asks for camera access, then scans the code on the other phone.  
