@@ -4,7 +4,8 @@
 
 
 Serverless multiplayer (no signal/stun/turn servers) via webrtc/camera/barcode.  
-The solution (link.js/datamatrix.js) is 4k (minified/zipped)
+The solution (link.js/datamatrix.js) is 4k (minified/zipped).  
+No third-party libraries are used.  
 
 [Try the Byte Cycles game example](https://bacionejs.github.io/multiplayer/cycles.html)
 
