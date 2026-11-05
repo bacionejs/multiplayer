@@ -3,7 +3,7 @@
 
 
 
-Serverless multiplayer (**no** signal/stun/turn servers) via webrtc/camera/barcode.  
+Serverless multiplayer via webrtc/camera/barcode (**no** signal/stun/turn servers).  
 
 ---
 
