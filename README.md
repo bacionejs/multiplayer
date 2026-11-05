@@ -8,6 +8,9 @@ Serverless multiplayer via webrtc/camera/barcode (**no** signal/stun/turn server
 ---
 
 This project is mainly about the serverless technique used and the simple game merely provides an end-to-end explanation. The files contain notes on how it all works.  
+
+---
+
 **No third-party libraries are used.**  
 **Needs two Android Chrome phones on the same wifi/hotspot.**  
 Other browsers may work. It needs `BarcodeDetector` support.  
