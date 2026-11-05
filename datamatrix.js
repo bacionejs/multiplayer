@@ -1,5 +1,5 @@
 /*
-Minimal Data Matrix ECC 200 (ISO/IEC 16022) supporting <114 ascii chars.
+Minimal Data Matrix ECC 200 (ISO/IEC 16022) barcode supporting <114 ascii chars.
 Usage: <script src="datamatrix.js"></script>; let [g, n] = datamatrix(ascii);
   g[y][x] is 1 for black; n x n modules incl. finder/timing; NO quiet zone
 */
