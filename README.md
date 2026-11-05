@@ -7,7 +7,7 @@ Serverless multiplayer (**no** signal/stun/turn servers) via webrtc/camera/barco
 
 ---
 
-This project is mainly about the handshake innovation: **stripped message and a custom barcode generator** which make it tiny, self-contained and robust.  
+This project is mainly about the handshake innovation: **stripped message and a custom barcode generator** which make it tiny and self-contained.  
 The game is merely a simple example to give an end-to-end explanation.  
 The files contain notes on how it all works.  
 The handshake solution (link.js/datamatrix.js) is 4k (minified/zipped).  
