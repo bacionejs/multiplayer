@@ -1,28 +1,28 @@
-// link.js: shared two-phone link for the Byte games.
-// Usage in a game page:  <script src="datamatrix.js"></script><script src="link.js"></script>, define game(link,side), then Link({title,game}).
-//   link.send(obj)        send a JSON message to the other phone
-//   link.on=m=>{...}      receive messages
-//   link.ready(fn)        "I am ready": fn() runs once BOTH players called ready (use for every round)
-//   link.onclose=()=>{}   connection lost
-// side is "a" or "b". element(tag,parent) is also available to games.
-// Golfed on purpose: written for AI readers, not humans. Needs two Android Chrome phones on the same wifi
-//   (BarcodeDetector, getUserMedia, WebRTC). No server, no STUN: one host candidate each, exchanged as camera-scanned codes.
-// FLOW:
-//   Link({title,game})   on page load shows the title screen (a TAP TO CONNECT button, wifi/camera notes); a tap anywhere calls handshake(game).
-//   handshake(game)      opens the camera FIRST, so Chrome reveals the real LAN address in the offer instead of an mDNS name.
-//                        Then this phone creates an offer (data channel "x"), shows it as a Data Matrix code (datamatrix.js),
-//                        and scans every video frame for the other phone's code. The note line under the code tells the user what to do next
-//                        ("Point your camera at..."), changes on the answerer once its own code is shown, and is replaced by any error text.
-//                        Scanning an "o" code makes this phone the answerer: it sets the remote offer and shows its answer code.
-//                        Scanning an "a" code on the offerer sets the remote answer.
-//                        When the data channel opens, launch(side) stops the camera and the scan loop (stream=0 ends it), removes every page element except
-//                        scripts, and calls game(makeLink(chan),side). The offerer is side "a", the answerer is side "b".
-//   gather(pc,desc)      sets the local description, waits for ICE gathering to finish (4 s at most), returns the stripped SDP.
-//   show(text)           draws the code on a canvas, sized to the screen, replacing the previous one.
-//   makeLink(chan)       wraps the data channel as the link object. link.ready() sends {t:"rdy"} and fn() runs when both phones sent it.
-//   sdpStrip / sdpUnstrip  shrink an SDP to "type|ufrag|pwd|fingerprint|ip|port" (type a = answer, o = offer) and rebuild it.
-//                        The UDP host candidate is the only one kept, IPv4 preferred.
-//   H2B / B2H            fingerprint hex (with colons) <-> unpadded base64, to make the code smaller.
+/*
+link.js: shared two-phone link for the Byte games.
+Usage in a game page:  <script src="datamatrix.js"></script><script src="link.js"></script>, define game(link,side), then Link({title,game}).
+  link.send(obj)        send a JSON message to the other phone
+  link.on=m=>{...}      receive messages
+  link.ready(fn)        "I am ready": fn() runs once BOTH players called ready (use for every round)
+  link.onclose=()=>{}   connection lost
+side is "a" or "b". element(tag,parent) is also available to games.
+FLOW:
+  Link({title,game})   on page load shows the title screen (a TAP TO CONNECT button, wifi/camera notes); a tap anywhere calls handshake(game).
+  handshake(game)      opens the camera FIRST, so Chrome reveals the real LAN address in the offer instead of an mDNS name.
+                       Then this phone creates an offer (data channel "x"), shows it as a Data Matrix code (datamatrix.js),
+                       and scans every video frame for the other phone's code. The note line under the code tells the user what to do next
+                       ("Point your camera at..."), changes on the answerer once its own code is shown, and is replaced by any error text.
+                       Scanning an "o" code makes this phone the answerer: it sets the remote offer and shows its answer code.
+                       Scanning an "a" code on the offerer sets the remote answer.
+                       When the data channel opens, launch(side) stops the camera and the scan loop (stream=0 ends it), removes every page element except
+                       scripts, and calls game(makeLink(chan),side). The offerer is side "a", the answerer is side "b".
+  gather(pc,desc)      sets the local description, waits for ICE gathering to finish (4 s at most), returns the stripped SDP.
+  show(text)           draws the code on a canvas, sized to the screen, replacing the previous one.
+  makeLink(chan)       wraps the data channel as the link object. link.ready() sends {t:"rdy"} and fn() runs when both phones sent it.
+  sdpStrip/sdpUnstrip  shrink an SDP to "type|ufrag|pwd|fingerprint|ip|port" (type a = answer, o = offer) and rebuild it.
+                       The UDP host candidate is the only one kept, IPv4 preferred.
+  H2B / B2H            fingerprint hex (with colons) <-> unpadded base64, to make the code smaller.
+*/
 
 let element=(tag,parent=document.body)=>parent.appendChild(document.createElement(tag));
 

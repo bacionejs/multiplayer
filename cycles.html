@@ -2,24 +2,14 @@
 <script src="datamatrix.js"></script>
 <script src="link.js"></script>
 <script>
-// cycles.html: "Byte Cycles", a two-phone light-cycle game. Needs datamatrix.js and link.js next to it.
-//   Entry point: game(link,side) is called by link.js once the two phones are connected. side "a" starts on top heading down,
-//   side "b" starts below heading up. Each phone draws its own cycle in blue and the other in orange.
-// RULES: cycles move one cell per tick on a 30x40 grid (GW,GH) and leave a trail. Hitting a wall or any trail
-//   crashes you; a head-on meeting is a draw. A tap starts the next round (both phones must tap). The score lasts for the session.
-// LOCKSTEP: both phones run the same simulation and only exchange inputs, never positions. Tick T runs only once both players'
-//   directions for T are known. Each phone schedules its own direction D=2 ticks ahead (myIn[T+D]) and sends {t:"i",k,d}.
-//   Directions are 0 up, 1 right, 2 down, 3 left (indexes into DX and DY).
-// STEERING: a joystick below the canvas, relative to the SCREEN, not to the cycle. The stick direction is the heading you want.
-//   Whichever of the four directions is pushed furthest counts, and only past the dead zone TH (30% of the stick radius J).
-//   Directions on the axis you are already moving on are ignored: no reversing, no repeating. The two arrows on that axis are dimmed.
-//   A turn is queued once each time the stick enters a new direction. At most 2 turns are queued (pend) and one is applied per tick,
-//   so a quick flick such as down-then-right works. A diagonal hold turns once and does not zigzag.
-//   last() is the heading after all queued turns, and the stick is always judged against it.
-// FUNCTIONS: start() new round, step() one lockstep tick, draw() the arena, drawStick() the joystick, aim(e) stick input,
-//   tap() "ready" for the next round (link.ready starts both phones together).
-// LAYOUT: the arena cell size c is chosen so the canvas plus message line plus joystick fit the screen height.
-// TUNING: J is the stick radius in px, TH the dead zone, TICK the speed, D the input delay in ticks.
+
+/*
+Two-phone game: needs datamatrix.js and link.js next to it; end the file with Link({title,game}).
+link.js pairs the phones, then calls game(link,side) once; side is "a" or "b".
+Show "tap to start", then call link.ready(startFn); startFn runs on both phones together.
+link.send(obj) sends JSON to the other phone; set link.on=obj=>{} to receive, link.onclose to detect disconnects.
+*/
+
 function game(link,side){
   const GW=30,GH=40,D=2,TICK=160,DX=[0,1,0,-1],DY=[-1,0,1,0],m=side=="a"?0:1,J=64,TH=J*.3,RM=J-26;
   document.body.style="margin:0;background:#000;color:#0ff;font:16px monospace;text-align:center;user-select:none;touch-action:none";
@@ -108,4 +98,3 @@ function game(link,side){
 
 Link({title:"Byte Cycles",game});
 </script>
-
