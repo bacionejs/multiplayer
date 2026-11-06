@@ -1,5 +1,5 @@
 /*
-link.js: shared two-phone link for the Byte games.
+link.js: shared two-phone link for the game.
 Usage in a game page:  <script src="datamatrix.js"></script><script src="link.js"></script>, define game(link,side), then Link({title,game}).
   link.send(obj)        send a JSON message to the other phone
   link.on=m=>{...}      receive messages
