@@ -20,6 +20,7 @@ Other browsers may work. It needs `BarcodeDetector` support.
 [Try the Byte Cycles game example](https://bacionejs.github.io/multiplayer/cycles.html)
 
 Each phone asks for **camera** access, then scans the code on the other phone to perform the initial handshake to establish peer-to-peer communication.  
+<br>
 Tip: don't lift your thumb off the joystick, just slide.  
 
 ---
