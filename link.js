@@ -19,7 +19,7 @@ FLOW:
   gather(pc,desc)      sets the local description, waits for ICE gathering to finish (4 s at most), returns the stripped SDP.
   show(text)           draws the code on a canvas, sized to the screen, replacing the previous one.
   makeLink(chan)       wraps the data channel as the link object. link.ready() sends {t:"rdy"} and fn() runs when both phones sent it.
-  sdpStrip/sdpUnstrip  shrink an SDP to "type|ufrag|pwd|fingerprint|ip|port" (type a = answer, o = offer).
+  sdpStrip/sdpUnstrip  shrink an SDP to "type|ufrag|pwd|fingerprint|ip|port" (type a = answer, o = offer). Stripping allows the datamatrix algorithm to be tiny, AND creates a simplier barcode which is less error prone during scanning.
                        The UDP host candidate is the only one kept, IPv4 preferred.
   H2B / B2H            fingerprint hex (with colons) <-> unpadded base64, to make the code smaller.
 */
