@@ -11,7 +11,7 @@ FLOW:
   handshake(game)      opens the camera FIRST, so Chrome reveals the real LAN address in the offer instead of an mDNS name.
                        Then this phone creates an offer (data channel "x"), shows it as a Data Matrix code (datamatrix.js),
                        and scans every video frame for the other phone's code. The note line under the code tells the user what to do next
-                       ("Point your camera at..."), changes on the answerer once its own code is shown, and is replaced by any error text.
+                       ("Point your camera at..."), changes on the answerer once its own code is shown.
                        Scanning an "o" code makes this phone the answerer: it sets the remote offer and shows its answer code.
                        Scanning an "a" code on the offerer sets the remote answer.
                        When the data channel opens, launch(side) stops the camera and the scan loop (stream=0 ends it), removes every page element except
@@ -19,7 +19,7 @@ FLOW:
   gather(pc,desc)      sets the local description, waits for ICE gathering to finish (4 s at most), returns the stripped SDP.
   show(text)           draws the code on a canvas, sized to the screen, replacing the previous one.
   makeLink(chan)       wraps the data channel as the link object. link.ready() sends {t:"rdy"} and fn() runs when both phones sent it.
-  sdpStrip/sdpUnstrip  shrink an SDP to "type|ufrag|pwd|fingerprint|ip|port" (type a = answer, o = offer) and rebuild it.
+  sdpStrip/sdpUnstrip  shrink an SDP to "type|ufrag|pwd|fingerprint|ip|port" (type a = answer, o = offer).
                        The UDP host candidate is the only one kept, IPv4 preferred.
   H2B / B2H            fingerprint hex (with colons) <-> unpadded base64, to make the code smaller.
 */
