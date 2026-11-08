@@ -4,6 +4,9 @@
 
 
 Serverless multiplayer via webrtc/camera/barcode (**no** signal/stun/turn servers).  
+<br>
+**No third-party libraries are used.**  
+**Needs two Android Chrome phones on the same hotspot.**  
 
 ---
 
@@ -15,10 +18,7 @@ Since the camera requires `https` you will need to host it on something like git
 
 ---
 
-**No third-party libraries are used.**  
-**Needs two Android Chrome phones on the same hotspot.**  
 
----
 
 [Try the Byte Cycles game example](https://bacionejs.github.io/multiplayer/cycles.html)
 
