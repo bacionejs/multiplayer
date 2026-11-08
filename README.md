@@ -12,7 +12,7 @@ This project is mainly about the serverless technique used and the simple game m
 ---
 
 **No third-party libraries are used.**  
-**Needs two Android Chrome phones on the same wifi/hotspot.**  
+**Needs two Android Chrome phones on the same hotspot.**  
 Other browsers may work. It needs `BarcodeDetector` support.  
 
 ---
