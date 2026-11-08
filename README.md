@@ -8,6 +8,10 @@ Serverless multiplayer via webrtc/camera/barcode (**no** signal/stun/turn server
 ---
 
 This project is mainly about the serverless technique used and the simple game merely provides an end-to-end explanation. The files contain notes on how it all works.  
+<br>
+The main use case is making a simple game to play head-to-head with your family.  
+Paste `cycles.html` to an AI and have it create a different game like battleship.  
+Since the camera requires `https` you will need to host it on something like github-pages.  
 
 ---
 
@@ -23,6 +27,3 @@ Each phone asks for **camera** access, then scans the code on the other phone to
 Tip: don't lift your thumb off the joystick, just slide.  
 
 ---
-The main use case is making a simple game to play head-to-head with your family.  
-Paste `cycles.html` to an AI and have it create a different game like battleship.  
-Since the camera requires `https` you will need to host it on something like github-pages.  
