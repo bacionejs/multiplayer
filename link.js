@@ -7,21 +7,21 @@ Usage in a game page:  <script src="datamatrix.js"></script><script src="link.js
   link.onclose=()=>{}   connection lost
 side is "a" or "b". element(tag,parent) is also available to games.
 FLOW:
-  Link({title,game})   on page load shows the title screen (a TAP TO CONNECT button, wifi/camera notes); a tap anywhere calls handshake(game).
+  Link({title,game})   on page load shows the title screen (a TAP TO CONNECT button, hotspot/camera notes); a tap anywhere calls handshake(game).
   handshake(game)      opens the camera FIRST, so Chrome reveals the real LAN address in the offer instead of an mDNS name.
-                       Then this phone creates an offer (data channel "x"), shows it as a Data Matrix code (datamatrix.js),
-                       and scans every video frame for the other phone's code. The note line under the code tells the user what to do next
-                       ("Point your camera at..."), changes on the answerer once its own code is shown.
-                       Scanning an "o" code makes this phone the answerer: it sets the remote offer and shows its answer code.
-                       Scanning an "a" code on the offerer sets the remote answer.
+                       Then this phone creates an offer (data channel "x"), shows it as a Data Matrix barcode (datamatrix.js),
+                       and scans every video frame for the other phone's barcode. The note line under the barcode tells the user what to do next
+                       ("Point your camera at..."), changes on the answerer once its own barcode is shown.
+                       Scanning an "o" barcode makes this phone the answerer: it sets the remote offer and shows its answer barcode.
+                       Scanning an "a" barcode on the offerer sets the remote answer.
                        When the data channel opens, launch(side) stops the camera and the scan loop (stream=0 ends it), removes every page element except
                        scripts, and calls game(makeLink(chan),side). The offerer is side "a", the answerer is side "b".
   gather(pc,desc)      sets the local description, waits for ICE gathering to finish (4 s at most), returns the stripped SDP.
-  show(text)           draws the code on a canvas, sized to the screen, replacing the previous one.
+  show(text)           draws the barcode on a canvas, sized to the screen, replacing the previous one.
   makeLink(chan)       wraps the data channel as the link object. link.ready() sends {t:"rdy"} and fn() runs when both phones sent it.
   sdpStrip/sdpUnstrip  shrink an SDP to "type|ufrag|pwd|fingerprint|ip|port" (type a = answer, o = offer). Stripping allows the datamatrix algorithm to be tiny, AND creates a simplier barcode which is less error prone during scanning.
                        The UDP host candidate is the only one kept, IPv4 preferred.
-  H2B / B2H            fingerprint hex (with colons) <-> unpadded base64, to make the code smaller.
+  H2B / B2H            fingerprint hex (with colons) <-> unpadded base64, to make the barcode smaller.
 */
 
 let element=(tag,parent=document.body)=>parent.appendChild(document.createElement(tag));
@@ -31,7 +31,7 @@ function Link({title,game}){
     document.title=title;document.body.style.background="#fff";
     Object.assign(element("div"),{
       style:"position:fixed;inset:0;font:20px monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;user-select:none;line-height:1.4;padding:20px",
-      innerHTML:title.split(" ").map(w=>[...w].join(" ")).join("<br>")+"<br><br><br><br><span style='border:2px solid #000;padding:10px 20px;font-size:16px'>TAP TO CONNECT</span><br><br><br><span style='font-size:13px;line-height:1.5'>Needs two Android Chrome phones on the same wifi.<br>Each phone asks for camera access, then scans the code on the other phone.</span>",
+      innerHTML:title.split(" ").map(w=>[...w].join(" ")).join("<br>")+"<br><br><br><br><span style='border:2px solid #000;padding:10px 20px;font-size:16px'>TAP TO CONNECT</span><br><br><br><span style='font-size:13px;line-height:1.5'>Needs two Android Chrome phones on the same hotspot.<br>Each phone asks for camera access, then scans the barcode on the other phone.</span>",
       onclick:()=>handshake(game)
     })
   }
@@ -91,7 +91,7 @@ function handshake(game){
         peer.ondatachannel=e=>{chan=e.channel;chan.onopen=()=>launch("b")};
         await peer.setRemoteDescription({type:"offer",sdp:sdpUnstrip(s)});
         show(await gather(peer,await peer.createAnswer()));
-        note.textContent="Now hold this code up to the other phone"
+        note.textContent="Now hold this barcode up to the other phone"
       }else await peer.setRemoteDescription({type:"answer",sdp:sdpUnstrip(s)});
       ovl.style.opacity=1;setTimeout(()=>ovl.style.opacity=0,1000)
     }catch(e){note.textContent=e.message}
@@ -102,7 +102,7 @@ function handshake(game){
   vid.style="display:none";vid.autoplay=vid.muted=vid.playsInline=true;
   ovl.style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:20px sans-serif;color:#fff;background:rgba(0,128,0,.8);z-index:9;opacity:0;transition:opacity .3s";
   ovl.textContent="SCAN OK!";
-  note.textContent="Point your camera at the code on the other phone";
+  note.textContent="Point your camera at the barcode on the other phone";
   navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(async s=>{
     stream=vid.srcObject=s;await vid.play();
     const det=new BarcodeDetector({formats:["data_matrix"]}),
