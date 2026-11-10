@@ -44,11 +44,12 @@
       background: #005f9e;
     }
 
+    /* Screens fill whatever space the toolbar leaves, so no hardcoded toolbar height is needed. */
     .screen {
       display: none;
       flex: 1;
+      min-height: 0;
       width: 100%;
-      height: calc(100vh - 47px);
       flex-direction: column;
       align-items: center;
       justify-content: center;
@@ -183,14 +184,14 @@
 
     function parseGameCode(code) {
       try {
-        const fn = new Function("link", "side", code + "\nreturn typeof game === 'function' ? game : null;");
+        const fn = new Function("link", "side", "area", code + "\nreturn typeof game === 'function' ? game : null;");
         const g = fn();
         if (g) return g;
       } catch (e) {
         console.warn("Standard parse failed, trying direct body evaluation:", e);
       }
       try {
-        return new Function("link", "side", code);
+        return new Function("link", "side", "area", code);
       } catch (e) {
         alert("Failed to parse game code: " + e.message);
       }
@@ -214,6 +215,17 @@
       runGameLocally(customFn);
     }
 
+    // Pixels the game can use: the game screen's content box (below the toolbar, inside its padding).
+    function gameArea() {
+      const box = document.getElementById("screen-game");
+      const cs = getComputedStyle(box);
+      const pad = k => parseFloat(cs["padding" + k]) || 0;
+      return {
+        w: box.clientWidth - pad("Left") - pad("Right"),
+        h: box.clientHeight - pad("Top") - pad("Bottom")
+      };
+    }
+
     function runGameLocally(gameFn) {
       switchScreen("screen-game");
       const gameContainer = document.getElementById("screen-game");
@@ -222,7 +234,7 @@
       updateToolbar("back");
 
       try {
-        gameFn(activeLink || { send:()=>{}, ready:(fn)=>fn(), on:()=>{} }, activeSide);
+        gameFn(activeLink || { send:()=>{}, ready:(fn)=>fn(), on:()=>{} }, activeSide, gameArea());
       } catch (e) {
         alert("Error running game: " + e.message);
         console.error(e);
