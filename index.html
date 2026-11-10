@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Two-Phone Game Loader</title>
+  <script src="datamatrix.js"></script>
+  <script src="handshake.js"></script>
+  <script src="cycles.js"></script>
+  <style>
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #111; color: #fff; font-family: monospace; }
+    body { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center; }
+    
+    #toolbar {
+      display: flex;
+      width: 100%;
+      background: #181818;
+      border-bottom: 2px solid #007acc;
+      box-sizing: border-box;
+      z-index: 1000;
+      flex-shrink: 0;
+    }
+    #toolbar button {
+      flex: 1;
+      margin: 0;
+      padding: 14px;
+      background: #222;
+      color: #555;
+      border: none;
+      border-right: 1px solid #111;
+      font-size: 14px;
+      font-family: monospace;
+      cursor: not-allowed;
+      box-sizing: border-box;
+      text-align: center;
+      transition: background 0.2s, color 0.2s;
+    }
+    #toolbar button.active {
+      background: #007acc;
+      color: #fff;
+      cursor: pointer;
+    }
+    #toolbar button.active:hover {
+      background: #005f9e;
+    }
+
+    .screen {
+      display: none;
+      flex: 1;
+      width: 100%;
+      height: calc(100vh - 47px);
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      padding: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+    .screen.active {
+      display: flex;
+    }
+
+    textarea {
+      width: 100%;
+      max-width: 420px;
+      height: 60vh;
+      background: #000;
+      color: #0f0;
+      border: 1px solid #444;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 12px;
+      box-sizing: border-box;
+      resize: vertical;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="toolbar">
+    <button id="btn-handshake" class="active" onclick="startHandshakeFlow()">Handshake</button>
+    <button id="btn-play" disabled onclick="handlePlayClick()">Play</button>
+    <button id="btn-back" disabled onclick="handleBackClick()">Back</button>
+  </div>
+
+  <div id="screen-initial" class="screen active">
+    <p style="font-size: 13px; color: #aaa; max-width: 320px; line-height: 1.5; text-align: left;">
+      Pair phones via camera first. Click the <strong>Handshake</strong> button above to begin.<br><br>
+      After the camera/barcode handshake, you can either play the sample game or replace the textarea with your own.<br><br>
+      <em>Tip: paste the sample game to an AI to have it create a new game like battleship.</em>
+    </p>
+  </div>
+
+  <div id="screen-handshake" class="screen"></div>
+
+  <div id="screen-menu" class="screen">
+    <p style="color: #0f0; margin: 0 0 10px 0; font-size: 13px;">LINK CONNECTED</p>
+    <textarea id="game-code-input"></textarea>
+  </div>
+
+  <div id="screen-game" class="screen" style="background: #000;"></div>
+
+  <script>
+    let activeLink = null;
+    let activeSide = "a";
+    let initialCode = "";
+
+    // Global element helper expected by AI-generated games
+    window.element = function(tag, parent) {
+      const el = document.createElement(tag);
+      if (parent) {
+        parent.appendChild(el);
+      } else {
+        document.getElementById("screen-game").appendChild(el);
+      }
+      return el;
+    };
+
+    function updateToolbar(activeName) {
+      const hs = document.getElementById("btn-handshake");
+      const pl = document.getElementById("btn-play");
+      const bk = document.getElementById("btn-back");
+
+      hs.className = activeName === "handshake" ? "active" : "";
+      hs.disabled = activeName !== "handshake";
+
+      pl.className = activeName === "play" ? "active" : "";
+      pl.disabled = activeName !== "play";
+
+      bk.className = activeName === "back" ? "active" : "";
+      bk.disabled = activeName !== "back";
+    }
+
+    function switchScreen(screenId) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      document.getElementById(screenId).classList.add("active");
+    }
+
+    function startHandshakeFlow() {
+      switchScreen("screen-handshake");
+      const handshakeContainer = document.getElementById("screen-handshake");
+      handshakeContainer.innerHTML = "";
+      
+      try {
+        handshake((link, side) => {
+          activeLink = link;
+          activeSide = side;
+          setupLinkListeners();
+          
+          const textarea = document.getElementById("game-code-input");
+          if (typeof window.game === "function") {
+            initialCode = window.game.toString();
+            textarea.value = initialCode;
+          } else {
+            initialCode = "// Default game not found";
+            textarea.value = initialCode;
+          }
+
+          switchScreen("screen-menu");
+          updateToolbar("play");
+        }, handshakeContainer);
+      } catch (e) {
+        alert("Handshake error: " + e.message);
+        switchScreen("screen-initial");
+        updateToolbar("handshake");
+      }
+    }
+
+    function setupLinkListeners() {
+      if (activeLink) {
+        activeLink.on = (data) => {
+          if (data && data.t === "load_game") {
+            const textarea = document.getElementById("game-code-input");
+            textarea.value = data.code;
+            initialCode = data.code;
+            const customFn = parseGameCode(data.code);
+            if (customFn) runGameLocally(customFn);
+          }
+        };
+      }
+    }
+
+    function parseGameCode(code) {
+      try {
+        const fn = new Function("link", "side", code + "\nreturn typeof game === 'function' ? game : null;");
+        const g = fn();
+        if (g) return g;
+      } catch (e) {
+        console.warn("Standard parse failed, trying direct body evaluation:", e);
+      }
+      try {
+        return new Function("link", "side", code);
+      } catch (e) {
+        alert("Failed to parse game code: " + e.message);
+      }
+      return null;
+    }
+
+    function handlePlayClick() {
+      const textarea = document.getElementById("game-code-input");
+      const codeInput = textarea.value;
+      const customFn = parseGameCode(codeInput);
+      if (!customFn) return;
+
+      const isDirty = codeInput.trim() !== initialCode.trim();
+      if (isDirty && activeLink && typeof activeLink.send === "function") {
+        try {
+          activeLink.send({ t: "load_game", code: codeInput });
+        } catch (e) {}
+        initialCode = codeInput;
+      }
+
+      runGameLocally(customFn);
+    }
+
+    function runGameLocally(gameFn) {
+      switchScreen("screen-game");
+      const gameContainer = document.getElementById("screen-game");
+      gameContainer.innerHTML = "";
+
+      updateToolbar("back");
+
+      try {
+        gameFn(activeLink || { send:()=>{}, ready:(fn)=>fn(), on:()=>{} }, activeSide);
+      } catch (e) {
+        alert("Error running game: " + e.message);
+        console.error(e);
+      }
+    }
+
+    function handleBackClick() {
+      let id = window.setTimeout(() => {}, 0); while (id--) window.clearTimeout(id);
+      let intervalId = window.setInterval(() => {}, 0); while (intervalId--) window.clearInterval(intervalId);
+
+      document.getElementById("screen-game").innerHTML = "";
+
+      switchScreen("screen-menu");
+      updateToolbar("play");
+      setupLinkListeners();
+    }
+  </script>
+</body>
+</html>
+
