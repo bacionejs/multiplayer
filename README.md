@@ -1,8 +1,5 @@
 <img width="300" alt="2 phones playing game" src="https://github.com/user-attachments/assets/2c41f6ac-9863-4a3e-8e14-950b606351f9" />
 
-
-
-
 Serverless multiplayer via webrtc/camera/barcode (**no** signal/stun/turn servers).  
 <br>
 **No third-party libraries are used.**  
@@ -10,20 +7,18 @@ Serverless multiplayer via webrtc/camera/barcode (**no** signal/stun/turn server
 
 ---
 
-This project is mainly about the serverless technique used and the simple game merely provides an end-to-end explanation. The files contain notes on how it all works.  
+This project is mainly about the serverless technique used and the sample game merely provides an end-to-end explanation.
 <br>
 The main use case is making a simple game to play head-to-head with your family.  
-Paste `cycles.html` to an AI and have it create a different game like battleship.  
-Since the camera requires `https` you will need to host it on something like github-pages.  
 
 ---
 
-
-
-[Try the Byte Cycles game example](https://bacionejs.github.io/multiplayer/cycles.html)
-
-Each phone asks for **camera** access, then scans the barcode on the other phone to perform the initial handshake to establish peer-to-peer communication.  
+After the camera/barcode handshake, you can either play the sample game or replace the textarea with your own.
 <br>
-Tip: don't lift your thumb off the joystick, just slide.  
+Tip: paste the sample game to an AI to have it create a new game like battleship.
+
+---
+
+[Try It](https://bacionejs.github.io/multiplayer)
 
 ---
