@@ -15,7 +15,7 @@ The main use case is making a simple game to play head-to-head with your family.
 
 After the camera/barcode handshake, you can either play the sample game or replace the `textarea` with your own game, in which case only one person does the replace and they must click `Play` first so that the new game is transmitted to the other person.  
 <br>
-Tip: paste the sample game from the `textarea` to an AI to have it create a new game like battleship.  
+*Tip: paste the sample game from the `textarea` to an AI to have it create a new game like battleship.*  
 
 ---
 
