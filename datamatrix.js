@@ -3,7 +3,6 @@ MINIMAL Data Matrix ECC 200 (ISO/IEC 16022) barcode encoder
 The stripped SDP input is 94 ascii characters, so we don't need the full encoder (4 kilobytes).
 Usage: <script src="datamatrix.js"></script>; let [g, n] = datamatrix(ascii);
   g[y][x] is 1 for black; n x n modules incl. finder/timing; NO quiet zone
-Note: Data Matrix provides higher module density than QR, making scanning significantly more robust on low-res cameras.
 */
 
 function datamatrix(strippedsdp){
