@@ -19,6 +19,6 @@ After the camera/barcode handshake, you can either play the sample game or repla
 
 ---
 
-[Try It](https://bacionejs.github.io/multiplayer)
+[Try It 🎮](https://bacionejs.github.io/multiplayer)
 
 ---
