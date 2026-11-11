@@ -44,7 +44,6 @@
       background: #005f9e;
     }
 
-    /* Screens fill whatever space the toolbar leaves, so no hardcoded toolbar height is needed. */
     .screen {
       display: none;
       flex: 1;
@@ -88,9 +87,10 @@
 
   <div id="screen-initial" class="screen active">
     <p style="font-size: 13px; color: #aaa; max-width: 320px; line-height: 1.5; text-align: left;">
-      Click the <strong>Handshake</strong> button above to begin.<br><br>
-      After the camera/barcode handshake, you can either play the sample game or replace the <code>textarea</code> with your own game, in which case only one person does the replace and they must click <strong>Play</strong> first so that the new game is transmitted to the other person.<br><br>
-      <em>Tip: paste the sample game from the <code>textarea</code> to an AI to have it create a new game like battleship.</em>
+  Click the <strong>Handshake</strong> button above to begin.<br><br>
+  After the handshake, you can play the sample game or paste a new game into the <code>textarea</code>. Whoever clicks <strong>Play</strong> first will instantly launch the game on both phones.<br><br>
+  <em>Note: To switch to a different game later, both players must click <strong>Back</strong> to return to the code screen together.</em><br><br>
+  <em>Tip: paste the sample game from the <code>textarea</code> to an AI to have it create a new game like battleship.</em>
     </p>
   </div>
 
@@ -107,7 +107,6 @@
     let activeSide = "a";
     let initialCode = "";
 
-    // Global element helper expected by AI-generated games
     window.element = function(tag, parent) {
       const el = document.createElement(tag);
       if (parent) {
@@ -139,6 +138,7 @@
     }
 
     function startHandshakeFlow() {
+      updateToolbar("none"); // Disable all toolbar buttons during scanning
       switchScreen("screen-handshake");
       const handshakeContainer = document.getElementById("screen-handshake");
       handshakeContainer.innerHTML = "";
@@ -204,8 +204,8 @@
       const customFn = parseGameCode(codeInput);
       if (!customFn) return;
 
-      const isDirty = codeInput.trim() !== initialCode.trim();
-      if (isDirty && activeLink && typeof activeLink.send === "function") {
+      // Always broadcast the game code to the other phone when Play is pressed
+      if (activeLink && typeof activeLink.send === "function") {
         try {
           activeLink.send({ t: "load_game", code: codeInput });
         } catch (e) {}
@@ -215,7 +215,6 @@
       runGameLocally(customFn);
     }
 
-    // Pixels the game can use: the game screen's content box (below the toolbar, inside its padding).
     function gameArea() {
       const box = document.getElementById("screen-game");
       const cs = getComputedStyle(box);
