@@ -1,4 +1,4 @@
-let element=(t,p=box,o)=>Object.assign(p.appendChild(document.createElement(t)),o)
+let element=(t,p=box,o)=>Object.assign(p.appendChild(document.createElement(t)),o);// also used by game
 element("style",document.head,{textContent:`
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;color:#fff;font-family:monospace}body{display:flex;flex-direction:column;align-items:center;text-align:center}
 .t{display:flex;flex-shrink:0;width:100%;background:#181818;border-bottom:2px solid #007acc}
@@ -24,7 +24,6 @@ let area=()=>{let c=getComputedStyle(box),p=k=>parseFloat(c["padding"+k])||0;ret
 let run=f=>{show(box);box.innerHTML="";mode(back);try{f(link,side,area())}catch(e){alert("Error running game: "+e.message)}}
 let enter=(l,s)=>{link=l;side=s;listen();code.value=typeof game=="function"?game.toString():"// Default game not found";show(menu);mode(play)}
 hs.onclick=()=>{mode();show(hsc);hsc.innerHTML="";try{handshake(enter,hsc)}catch(e){alert("Handshake error: "+e.message);show(init);mode(hs)}}
-// long-press Handshake = single-device dev bypass
-let hold=(e,c,t)=>{e.onpointerdown=_=>t=setTimeout(c,500);e.onpointerup=e.onpointercancel=_=>clearTimeout(t)};hold(hs,()=>hs.disabled||enter({send(){},on(){}},"a"));hs.oncontextmenu=()=>false
+let hold=(e,c,t)=>{e.onpointerdown=_=>t=setTimeout(c,500);e.onpointerup=e.onpointercancel=_=>clearTimeout(t)};hold(hs,()=>hs.disabled||enter({send(){},on(){}},"a"));hs.oncontextmenu=()=>false;// long-press Handshake = single-device dev bypass
 play.onclick=()=>{let c=code.value,f=parse(c);if(!f)return;try{link.send({t:"load_game",code:c})}catch{}run(f)}
 back.onclick=()=>{for(let i=setTimeout(_=>_);i--;)clearTimeout(i);for(let i=setInterval(_=>_);i--;)clearInterval(i);box.innerHTML="";show(menu);mode(play);listen()}
