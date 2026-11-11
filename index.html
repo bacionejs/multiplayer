@@ -80,17 +80,17 @@
 <body>
 
   <div id="toolbar">
-    <button id="btn-handshake" class="active" onclick="startHandshakeFlow()">Handshake</button>
+    <button id="btn-handshake" class="active">Handshake</button>
     <button id="btn-play" disabled onclick="handlePlayClick()">Play</button>
     <button id="btn-back" disabled onclick="handleBackClick()">Back</button>
   </div>
 
   <div id="screen-initial" class="screen active">
     <p style="font-size: 13px; color: #aaa; max-width: 320px; line-height: 1.5; text-align: left;">
-  Click the <strong>Handshake</strong> button above to begin the camera/barcode handshake.<br><br>
-  After the handshake, you can play the sample game or replace the code in the <code>textarea</code>. Only one person needs to paste the new game because whoever clicks <strong>Play</strong> first will instantly transmit and launch it on both phones.<br><br>
-  <em>Note: To switch to a different game later, both players must click <strong>Back</strong> to return to the code screen together.</em><br><br>
-  <em>Tip: paste the sample game from the <code>textarea</code> to an AI to have it create a new game like battleship.</em>
+      Click the <strong>Handshake</strong> button above to begin the camera handshake. (Tip: Hold down the Handshake button for nearly a second to bypass the camera and enter dev mode for single device testing).<br><br>
+      After the handshake, you can play the sample game or replace the code in the <code>textarea</code>. Only one person needs to paste the new game because whoever clicks <strong>Play</strong> first will instantly transmit and launch it on both phones.<br><br>
+      <em>Note: To switch to a different game later, both players must click <strong>Back</strong> to return to the code screen together.</em><br><br>
+      <em>Tip: paste the sample game from the <code>textarea</code> to an AI to have it create a new game like battleship.</em>
     </p>
   </div>
 
@@ -106,6 +106,41 @@
     let activeLink = null;
     let activeSide = "a";
     let initialCode = "";
+    let pressTimer = null;
+    window.wasLongPress = false;
+
+    const handshakeBtn = document.getElementById("btn-handshake");
+
+    handshakeBtn.addEventListener("click", (e) => {
+      if (window.wasLongPress) {
+        window.wasLongPress = false;
+        e.preventDefault();
+        return;
+      }
+      startHandshakeFlow();
+    });
+
+    function startPressTimer() {
+      window.wasLongPress = false;
+      pressTimer = setTimeout(() => {
+        window.wasLongPress = true;
+        startDevBypass();
+      }, 800);
+    }
+
+    function cancelPressTimer() {
+      if (pressTimer) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+      }
+    }
+
+    handshakeBtn.addEventListener("mousedown", startPressTimer);
+    handshakeBtn.addEventListener("mouseup", cancelPressTimer);
+    handshakeBtn.addEventListener("mouseleave", cancelPressTimer);
+    handshakeBtn.addEventListener("touchstart", startPressTimer, {passive: true});
+    handshakeBtn.addEventListener("touchend", cancelPressTimer);
+    handshakeBtn.addEventListener("touchcancel", cancelPressTimer);
 
     window.element = function(tag, parent) {
       const el = document.createElement(tag);
@@ -137,8 +172,30 @@
       document.getElementById(screenId).classList.add("active");
     }
 
+    function startDevBypass() {
+      // Mock link for single device testing
+      activeLink = {
+        send: (data) => { console.log("Dev bypass mock send:", data); },
+        on: () => {}
+      };
+      activeSide = "a";
+      setupLinkListeners();
+
+      const textarea = document.getElementById("game-code-input");
+      if (typeof window.game === "function") {
+        initialCode = window.game.toString();
+        textarea.value = initialCode;
+      } else {
+        initialCode = "// Default game not found";
+        textarea.value = initialCode;
+      }
+
+      switchScreen("screen-menu");
+      updateToolbar("play");
+    }
+
     function startHandshakeFlow() {
-      updateToolbar("none"); // Disable all toolbar buttons during scanning
+      updateToolbar("none");
       switchScreen("screen-handshake");
       const handshakeContainer = document.getElementById("screen-handshake");
       handshakeContainer.innerHTML = "";
@@ -204,7 +261,6 @@
       const customFn = parseGameCode(codeInput);
       if (!customFn) return;
 
-      // Always broadcast the game code to the other phone when Play is pressed
       if (activeLink && typeof activeLink.send === "function") {
         try {
           activeLink.send({ t: "load_game", code: codeInput });
