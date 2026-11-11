@@ -34,6 +34,11 @@
       box-sizing: border-box;
       text-align: center;
       transition: background 0.2s, color 0.2s;
+
+      /* Prevent native OS callouts, selection, and long-press popups */
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
     #toolbar button.active {
       background: #007acc;
@@ -111,16 +116,33 @@
 
     const handshakeBtn = document.getElementById("btn-handshake");
 
-    handshakeBtn.addEventListener("click", (e) => {
-      if (window.wasLongPress) {
-        window.wasLongPress = false;
+    if (handshakeBtn) {
+      // Prevent browser long-press menu
+      handshakeBtn.addEventListener("contextmenu", (e) => {
         e.preventDefault();
-        return;
-      }
-      startHandshakeFlow();
-    });
+      });
+
+      handshakeBtn.addEventListener("click", (e) => {
+        if (window.wasLongPress) {
+          window.wasLongPress = false;
+          e.preventDefault();
+          return;
+        }
+        startHandshakeFlow();
+      });
+
+      handshakeBtn.addEventListener("mousedown", startPressTimer);
+      handshakeBtn.addEventListener("mouseup", cancelPressTimer);
+      handshakeBtn.addEventListener("mouseleave", cancelPressTimer);
+      handshakeBtn.addEventListener("touchstart", startPressTimer, {passive: true});
+      handshakeBtn.addEventListener("touchend", cancelPressTimer);
+      handshakeBtn.addEventListener("touchcancel", cancelPressTimer);
+    }
 
     function startPressTimer() {
+      const hsBtn = document.getElementById("btn-handshake");
+      if (!hsBtn || hsBtn.disabled) return;
+
       window.wasLongPress = false;
       pressTimer = setTimeout(() => {
         window.wasLongPress = true;
@@ -134,13 +156,6 @@
         pressTimer = null;
       }
     }
-
-    handshakeBtn.addEventListener("mousedown", startPressTimer);
-    handshakeBtn.addEventListener("mouseup", cancelPressTimer);
-    handshakeBtn.addEventListener("mouseleave", cancelPressTimer);
-    handshakeBtn.addEventListener("touchstart", startPressTimer, {passive: true});
-    handshakeBtn.addEventListener("touchend", cancelPressTimer);
-    handshakeBtn.addEventListener("touchcancel", cancelPressTimer);
 
     window.element = function(tag, parent) {
       const el = document.createElement(tag);
@@ -157,8 +172,10 @@
       const pl = document.getElementById("btn-play");
       const bk = document.getElementById("btn-back");
 
-      hs.className = activeName === "handshake" ? "active" : "";
-      hs.disabled = activeName !== "handshake";
+      if (hs) {
+        hs.className = activeName === "handshake" ? "active" : "";
+        hs.disabled = activeName !== "handshake";
+      }
 
       pl.className = activeName === "play" ? "active" : "";
       pl.disabled = activeName !== "play";
@@ -173,6 +190,8 @@
     }
 
     function startDevBypass() {
+      cancelPressTimer();
+
       // Mock link for single device testing
       activeLink = {
         send: (data) => { console.log("Dev bypass mock send:", data); },
