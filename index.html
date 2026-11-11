@@ -1,13 +1,10 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two-Phone Game Loader</title>
 <script src="datamatrix.js"></script><script src="handshake.js"></script><script src="sample.js"></script><style>
 html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;color:#fff;font-family:monospace} body{display:flex;flex-direction:column;align-items:center;text-align:center}
-#bar{display:flex;flex-shrink:0;position:relative;z-index:1000;width:100%;background:#181818;border-bottom:2px solid #007acc}
-#bar button{flex:1;padding:14px;background:#222;color:#555;border:0;border-right:1px solid #111;font:14px monospace;user-select:none}
-#bar button:enabled{background:#007acc;color:#fff}
-.s{display:none;flex:1;min-height:0;width:100%;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;padding:20px;overflow:hidden;position:relative}
-.s.on{display:flex}
-#s-game{background:#000}
-#s-initial p{font-size:13px;color:#aaa;max-width:320px;line-height:1.5;text-align:left}
+#bar{display:flex;flex-shrink:0;width:100%;background:#181818;border-bottom:2px solid #007acc}
+#bar button{flex:1;padding:14px;background:#222;color:#555;border:0;border-right:1px solid #111;font:14px monospace;user-select:none} #bar button:enabled{background:#007acc;color:#fff}
+.s{display:none;flex:1;min-height:0;width:100%;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;padding:20px;overflow:hidden;position:relative} .s.on{display:flex}
+#s-game{background:#000;contain:paint} #s-initial p{font-size:13px;color:#aaa;max-width:320px;line-height:1.5;text-align:left}
 #code{width:100%;max-width:420px;height:60vh;background:#000;color:#0f0;border:1px solid #444;padding:10px;font:12px monospace;box-sizing:border-box;resize:vertical;text-align:left}
 </style></head><body>
 <div id="bar"><button id="b-handshake">Handshake</button><button id="b-play" disabled>Play</button><button id="b-back" disabled>Back</button></div>
@@ -19,16 +16,16 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;color:
 </p></div>
 <div id="s-handshake" class="s"></div><div id="s-menu" class="s"><textarea id="code"></textarea></div><div id="s-game" class="s"></div>
 <script>
-let link,side="a",$=i=>document.getElementById(i),screens=document.querySelectorAll(".s"),show=id=>screens.forEach(s=>s.classList.toggle("on",s.id=="s-"+id)),bar=n=>["handshake","play","back"].forEach(b=>$("b-"+b).disabled=b!=n),hs=$("b-handshake"),code=$("code"),box=$("s-game");
-window.element=(tag,p=box)=>p.appendChild(document.createElement(tag));
-let listen=()=>link.on=d=>{if(d?.t=="load_game"){code.value=d.code;let f=parse(d.code);f&&run(f);}};
-let parse=c=>{try{let g=new Function("link","side","area",c+"\nreturn typeof game=='function'?game:null")();if(g)return g;}catch{}try{return new Function("link","side","area",c);}catch(e){alert("Failed to parse game code: "+e.message);}};
-let area=()=>{let c=getComputedStyle(box),p=k=>parseFloat(c["padding"+k])||0;return{w:box.clientWidth-p("Left")-p("Right"),h:box.clientHeight-p("Top")-p("Bottom")};};
-let run=f=>{show("game");box.innerHTML="";bar("back");try{f(link,side,area());}catch(e){alert("Error running game: "+e.message);}};
-let enter=(l,s)=>{link=l;side=s;listen();code.value=typeof game=="function"?game.toString():"// Default game not found";show("menu");bar("play");};
-hs.onclick=()=>{bar();show("handshake");let c=$("s-handshake");c.innerHTML="";try{handshake(enter,c);}catch(e){alert("Handshake error: "+e.message);show("initial");bar("handshake");}};
+let link,side="a",$=i=>document.getElementById(i),screens=document.querySelectorAll(".s"),show=id=>screens.forEach(s=>s.classList.toggle("on",s.id=="s-"+id)),bar=n=>["handshake","play","back"].forEach(b=>$("b-"+b).disabled=b!=n),hs=$("b-handshake"),code=$("code"),box=$("s-game")
+let element=(tag,p=box)=>p.appendChild(document.createElement(tag))
+let listen=()=>link.on=d=>{if(d?.t=="load_game"){code.value=d.code;let f=parse(d.code);f&&run(f)}}
+let parse=c=>{try{let g=new Function("link","side","area",c+"\nreturn typeof game=='function'?game:null")();if(g)return g}catch{}try{return new Function("link","side","area",c)}catch(e){alert("Failed to parse game code: "+e.message)}}
+let area=()=>{let c=getComputedStyle(box),p=k=>parseFloat(c["padding"+k])||0;return{w:box.clientWidth-p("Left")-p("Right"),h:box.clientHeight-p("Top")-p("Bottom")}}
+let run=f=>{show("game");box.innerHTML="";bar("back");try{f(link,side,area())}catch(e){alert("Error running game: "+e.message)}}
+let enter=(l,s)=>{link=l;side=s;listen();code.value=typeof game=="function"?game.toString():"// Default game not found";show("menu");bar("play")}
+hs.onclick=()=>{bar();show("handshake");let c=$("s-handshake");c.innerHTML="";try{handshake(enter,c)}catch(e){alert("Handshake error: "+e.message);show("initial");bar("handshake")}}
 // long-press Handshake = single-device dev bypass
-let hold=(e,c,t)=>{e.onpointerdown=_=>t=setTimeout(c,500);e.onpointerup=e.onpointercancel=_=>clearTimeout(t);};hold(hs,()=>hs.disabled||enter({send(){},on(){}},"a"));hs.oncontextmenu=()=>false;
-$("b-play").onclick=()=>{let c=code.value,f=parse(c);if(!f)return;try{link.send({t:"load_game",code:c});}catch{}run(f);};
-$("b-back").onclick=()=>{for(let i=setTimeout(_=>_);i--;)clearTimeout(i);for(let i=setInterval(_=>_);i--;)clearInterval(i);box.innerHTML="";show("menu");bar("play");listen();};
+let hold=(e,c,t)=>{e.onpointerdown=_=>t=setTimeout(c,500);e.onpointerup=e.onpointercancel=_=>clearTimeout(t)};hold(hs,()=>hs.disabled||enter({send(){},on(){}},"a"));hs.oncontextmenu=()=>false
+$("b-play").onclick=()=>{let c=code.value,f=parse(c);if(!f)return;try{link.send({t:"load_game",code:c})}catch{}run(f)}
+$("b-back").onclick=()=>{for(let i=setTimeout(_=>_);i--;)clearTimeout(i);for(let i=setInterval(_=>_);i--;)clearInterval(i);box.innerHTML="";show("menu");bar("play");listen()}
 </script></body></html>

@@ -8,9 +8,7 @@ let makeLink=chan=>{
 };
 
 let handshake=(onConnected,container=document.body)=>{
-  let el=(t,p=container)=>p.appendChild(document.createElement(t)),
-  peer,chan,stream,last="",qr,answering=0,
-  box=el("div"),can=el("canvas",box),ctx=can.getContext("2d"),vid=el("video",box),ovl=el("div",box),note=el("div",box),
+  let el=(t,p=container)=>p.appendChild(document.createElement(t)),peer,chan,stream,last="",qr,answering=0,box=el("div"),can=el("canvas",box),ctx=can.getContext("2d"),vid=el("video",box),ovl=el("div",box),note=el("div",box),
   gather=async(pc,desc)=>{
     let done=new Promise(r=>{pc.onicecandidate=e=>e.candidate||r();setTimeout(r,4000)});
     await pc.setLocalDescription(desc);await done;
@@ -86,4 +84,3 @@ sdpStrip=sdp=>{
   return f.join("|")
 },
 sdpUnstrip=(s,[type,ufrag,pwd,fp,ip,port]=s.split("|"))=>["v=0","o=- 1 2 IN IP4 0.0.0.0","s=-","t=0 0","m=application 9 UDP/DTLS/SCTP webrtc-datachannel","a=ice-ufrag:"+ufrag,"a=ice-pwd:"+pwd,"a=fingerprint:sha-256 "+B2H(fp),"a=setup:"+(type=="o"?"actpass":"active"),"a=candidate:1 1 udp 2113937151 "+ip+" "+port+" typ host","a=end-of-candidates",""].join("\r\n");
-
