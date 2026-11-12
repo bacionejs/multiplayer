@@ -1,10 +1,11 @@
-function game(link, side, area) {
+function game(link, side, area, name="cycles") {
 /*
 Two-phone light-cycles game.
 side is "a" or "b".
 link.ready(startFn): startFn runs on both phones together.
 area = {w,h}: pixels available to the game (already below the toolbar and inside padding). Size everything from this, not from innerWidth/innerHeight.
 link.send(obj) sends JSON to the other phone; set link.on=obj=>{} to receive, link.onclose to detect disconnects.
+name: ignored by the game. The code screen reads its one-word string default as the game's name and saves the code under it on the phone that presses Play. Remove it or leave it empty to not save.
 element(tag, parent=game area, props): global helper that creates a DOM element, appends it to parent, assigns props (e.g. {textContent, className}), and returns it.
 */
 
@@ -112,4 +113,5 @@ element(tag, parent=game area, props): global helper that creates a DOM element,
   msg.textContent="Tap to start. You are blue.";
   c2.fillStyle=C.bg;c2.fillRect(0,0,can.width,can.height);drawStick();
 }
+
 
