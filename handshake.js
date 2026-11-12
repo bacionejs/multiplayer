@@ -1,14 +1,24 @@
 /*handshake.js: WebRTC optical handshake via Data Matrix barcodes.*/
 function makeLink(chan){
+  /* Game messages go to link.on(obj). Shell messages use {sys:...} and go to link.sys(obj): "rdy" is handled here, "load"/"back"/"error" by the shell. Games should not send objects with a "sys" key. */
   let me=0,them=0,start,go=()=>me&&them&&(me=them=0,start()),
-  link={send(o){try{chan.send(JSON.stringify(o))}catch{}},on(){},ready(fn){me=1;start=fn;link.send({t:"rdy"});go()}};
-  function receive({data}){let m;try{m=JSON.parse(data)}catch{return}m.t=="rdy"?(them=1,go()):link.on(m)}
+  link={
+    send(o){try{chan.send(JSON.stringify(o))}catch{}},
+    sys(){},on(){},
+    ready(fn){me=1;start=fn;link.send({sys:"rdy"});go()},
+    reset(){me=them=0;start=null;link.on=()=>{};link.onclose=null}
+  };
+  function receive({data}){let m;try{m=JSON.parse(data)}catch{return}
+    if(!m||typeof m!="object")return;
+    m.sys=="rdy"?(them=1,go()):m.sys?link.sys(m):link.on(m)}
   chan.onmessage=receive;
   chan.onclose=()=>link.onclose?.();
   return link
 }
 
-function handshake(onConnected,container=document.body){
+/* handshake(container) returns a Promise that resolves to {link, side} once the phones are connected, and rejects on camera/scanner errors. */
+function handshake(container=document.body){
+ return new Promise((resolve,reject)=>{
   let el=(t,p=container)=>p.appendChild(document.createElement(t)),peer,chan,stream,last="",qr,answering=0,box=el("div"),can=el("canvas",box),ctx=can.getContext("2d"),vid=el("video",box),ovl=el("div",box),note=el("div",box);
 
   async function gather(pc,desc){
@@ -25,10 +35,11 @@ function handshake(onConnected,container=document.body){
     c.style="max-height:25vh;width:auto;height:auto;object-fit:contain";
     box.prepend(qr=c)
   }
+  function fail(e){stream?.getTracks().forEach(t=>t.stop());stream=0;box.remove();reject(e)}
   function launch(side){
     stream?.getTracks().forEach(t=>t.stop());stream=0;
     box.remove();
-    onConnected(makeLink(chan),side)
+    resolve({link:makeLink(chan),side})
   }
   async function offer(){
     peer=new RTCPeerConnection;chan=peer.createDataChannel("x");
@@ -73,7 +84,8 @@ function handshake(onConnected,container=document.body){
   ovl.textContent="SCAN OK!";
   note.textContent="Point your camera at the barcode on the other phone";
 
-  navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(startCamera).catch(e=>note.textContent="Camera or scanner error: "+e.message)
+  navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(startCamera).catch(e=>fail(Error("Camera or scanner error: "+e.message)))
+ })
 }
 
 function H2B(hex){return btoa(String.fromCharCode(...(hex.match(/../g)||[]).map(x=>parseInt(x,16)))).replace(/=/g,"")}
@@ -89,3 +101,4 @@ function sdpStrip(sdp){
 function sdpUnstrip(s,[type,ufrag,pwd,fp,ip,port]=s.split("|")){
   return["v=0","o=- 1 2 IN IP4 0.0.0.0","s=-","t=0 0","m=application 9 UDP/DTLS/SCTP webrtc-datachannel","a=ice-ufrag:"+ufrag,"a=ice-pwd:"+pwd,"a=fingerprint:sha-256 "+B2H(fp),"a=setup:"+(type=="o"?"actpass":"active"),"a=candidate:1 1 udp 2113937151 "+ip+" "+port+" typ host","a=end-of-candidates",""].join("\r\n")
 }
+
