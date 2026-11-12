@@ -1,4 +1,5 @@
 /*
+datamatrix.js
 MINIMAL Data Matrix ECC 200 (ISO/IEC 16022) barcode encoder
 The stripped SDP input is 94 ascii characters, so we don't need the full encoder (4 kilobytes).
 Usage: <script src="datamatrix.js"></script>; let [g, n] = datamatrix(ascii);

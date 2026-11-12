@@ -1,4 +1,5 @@
 /*
+index.js
 Two-phone game shell.
 Shows a toolbar (Handshake / Play / Back) and runs a game on both phones.
 Flow: Handshake connects the phones (handshake(onConnect, container)), the code screen shows the game source in a textarea, and Play sends that code to the other phone and launches it on both. Back returns both to the code screen. Long-press Handshake for a single-device dev bypass.
@@ -12,6 +13,7 @@ element("style",document.head,{textContent:`
   .toolbar{display:flex;flex-shrink:0;width:100%;background:#181818;border-bottom:2px solid #007acc}
   .toolbar button{flex:1;padding:14px;background:#222;color:#555;border:0;border-right:1px solid #111;font:14px monospace;user-select:none}.toolbar button:enabled{background:#007acc;color:#fff}
   .screen{display:none;flex:1;min-height:0;width:100%;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;padding:20px;overflow:hidden;position:relative}.screen.on{display:flex}
+  .intro,.code{overflow-y:auto;-webkit-overflow-scrolling:touch;justify-content:flex-start}
   .game{background:#000;contain:paint}
   .intro p{font-size:13px;color:#aaa;max-width:320px;line-height:1.5;text-align:left}
   .code textarea{width:100%;max-width:420px;height:60vh;background:#000;color:#0f0;border:1px solid #444;padding:10px;font:12px monospace;box-sizing:border-box;resize:vertical;text-align:left}
@@ -20,7 +22,7 @@ let link,side="a",builtinSrc="",builtinName="",body=document.body,
   toolbar=element("div",body,{className:"toolbar"}),
   [handshakeBtn,playBtn,backBtn]=["Handshake","Play","Back"].map(text=>element("button",toolbar,{textContent:text})),
   makeScreen=props=>element("div",body,{className:"screen",...props}),
-  introScreen=makeScreen({className:"screen intro on",innerHTML:"<p>Click <b>Handshake</b> above to begin the camera/barcode handshake.<br><br>After the handshake, play the sample game or replace the code in the textarea with a new game. Only one person needs to paste it: whoever clicks <b>Play</b> first instantly transmits and launches it on both phones.<br><br>Games save automatically on that person's phone when they click <b>Play</b>, under the name in the game's last parameter (the sample's is <b>cycles</b>). Pick a saved game from the dropdown on the code screen. The sample can't be overwritten, so give your own game a new one-word name to keep it.<br><br><i>To switch games later, both players must click <b>Back</b> to return to the code screen together.</i><br><br><i>Tip: paste the sample game from the textarea into an AI and ask it to make a new game like battleship. Tell it to give the new game its own one-word name in that last parameter.</i></p>"}),
+  introScreen=makeScreen({className:"screen intro on",innerHTML:"<p>Click <b>Handshake</b> above to perform the camera/barcode handshake, and then click <b>Play</b>.<br><br>OPTIONAL<br>Play the sample game or replace the code in the textarea with a new game. Only one person needs to paste it: whoever clicks <b>Play</b> first instantly transmits and launches it on both phones.<br><br>Games save automatically on that person's phone when they click <b>Play</b>, under the name in the game's last parameter (the sample's is <b>cycles</b>). Pick a saved game from the dropdown on the code screen. The sample can't be overwritten, so give your own game a new one-word name to keep it.<br><br><i>To switch games later, both players must click <b>Back</b> to return to the code screen together.</i><br><br><i>Tip: paste the sample game from the textarea into an AI and ask it to make a new game like battleship. Tell it to give the new game its own one-word name in that last parameter.</i></p>"}),
   handshakeScreen=makeScreen(),codeScreen=makeScreen({className:"screen code"}),
   nameBox=element("select",codeScreen),
   codeBox=element("textarea",codeScreen),
