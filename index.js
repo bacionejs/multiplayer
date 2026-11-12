@@ -6,7 +6,7 @@ Flow: Handshake connects the phones (handshake(container) resolves to {link, sid
 Shell messages travel over the same link as game messages but use a {sys:...} envelope that link.sys() receives, so games can never overwrite them: {sys:"load",code} starts a game, {sys:"back"} returns both phones to the code screen, {sys:"error",msg} reports that the other phone couldn't load or run the game. Games only ever see link.on for their own messages.
 Each game runs in its own same-origin iframe, so its timers, listeners and globals disappear when Back removes the iframe. This isolates games from the shell; it is not a security sandbox. A game may also return a cleanup function, which Back calls first.
 Saving: if the 4th parameter of game has a one-word string default (name="cycles"), Play saves the code to IndexedDB under that name, only on the phone that pressed Play. The built-in sample's name is reserved and never overwritten. A dropdown on the code screen reloads saved games.
-Games define function game(link, side, area): side is "a" or "b", area = {w,h} is the usable pixel space, and link has send(obj), on, ready(startFn) and onclose.
+Games define function game(link, side, area, name="mygame"): side is "a" or "b", area = {w,h} is the usable pixel space, and link has send(obj), on, ready(startFn) and onclose. The optional name parameter is ignored by the game; it is only the save key (see Saving).
 element(tag, parent=game body, props): creates a DOM element, appends it to parent, assigns props, and returns it; shared with games.
 */
 
