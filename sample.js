@@ -5,6 +5,7 @@ side is "a" or "b".
 link.ready(startFn): startFn runs on both phones together.
 area = {w,h}: pixels available to the game (already below the toolbar and inside padding). Size everything from this, not from innerWidth/innerHeight.
 link.send(obj) sends JSON to the other phone; set link.on=obj=>{} to receive, link.onclose to detect disconnects.
+element(tag, parent=game area, props): global helper that creates a DOM element, appends it to parent, assigns props (e.g. {textContent, className}), and returns it.
 */
 
   // Game rules
