@@ -1,5 +1,5 @@
 /*
-comments.js: single source for all instructions/comments, so they are written once.
+comments.js: single source for all instructions/comments
 
 About the shell (index.js), for reference; the code doesn't use this text:
   Two-phone game shell.
