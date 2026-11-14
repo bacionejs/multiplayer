@@ -7,7 +7,7 @@ About the shell (index.js), for reference; the code doesn't use this text:
   Flow: Handshake connects the phones (handshake(container) resolves to {link, side}), the code screen shows the game source in a textarea, and Play sends that code to the other phone and launches it on both. Back returns BOTH phones to the code screen. Long-press Handshake for a single-device dev bypass.
   Shell messages travel over the same link as game messages but use a {sys:...} envelope that link.sys() receives, so games can never overwrite them: {sys:"load",code} starts a game, {sys:"back"} returns both phones to the code screen, {sys:"error",msg} reports that the other phone couldn't load or run the game. Games only ever see link.on for their own messages.
   Saving: if the 4th parameter of game has a one-word string, Play saves the code to IndexedDB under that name, only on the phone that pressed Play. The sample's name is reserved and never overwritten. A dropdown on the code screen reloads saved games.
-  Games define function game(link, side, area, name="mygame"). See COMMENTS.comment for what games receive.
+  Games define function game(link, side, area, name="mygame"). See COMMENTS.samplegamecomment for what games receive.
 
 */
 
