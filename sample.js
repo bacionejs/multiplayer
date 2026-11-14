@@ -1,14 +1,6 @@
+// Instructions for this game live in comments.js (COMMENTS.sample); index.js inserts them
+// at the top of this function when it is shown in the textarea.
 function game(link, side, area, name="cycles") {
-/*
-Two-phone light-cycles game.
-side is "a" or "b".
-link.ready(startFn): startFn runs on both phones together.
-area = {w,h}: pixels available to the game (already below the toolbar and inside padding). Size everything from this, not from innerWidth/innerHeight.
-link.send(obj) sends JSON to the other phone; set link.on=obj=>{} to receive, link.onclose to detect disconnects.
-name: ignored by the game. The code screen reads its one-word string default as the game's name and saves the code under it on the phone that presses Play. Remove it or leave it empty to not save.
-element(tag, parent=game area, props): global helper that creates a DOM element, appends it to parent, assigns props (e.g. {textContent, className}), and returns it.
-Each game runs in its own same-origin iframe, so its timers, listeners and globals disappear when Back removes the iframe. This isolates games from the shell; it is not a security sandbox. A game may also return a cleanup function, which Back calls first.
-*/
 
 // Game rules
 const GW=30,GH=40,D=2,TICK=160,MAX_QUEUE=2,BUZZ_MS=200;
@@ -116,3 +108,4 @@ c2.fillStyle=C.bg;c2.fillRect(0,0,can.width,can.height);drawStick();
 
 
 }
+
