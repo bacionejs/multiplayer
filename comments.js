@@ -22,12 +22,12 @@ link.on=obj=>{}
 link.onclose to detect disconnects
 side = "a" or "b"
 area = {w,h}
-name is used by the parent save parser
+name is parsed by the caller for saving into indexedDB
 */
 
 `,
 
-  intro: '<p>Click <b>Handshake</b> above to perform the camera/barcode handshake, and then click <b>Play</b>.<br><br>OPTIONAL<br>Play the sample game or replace the code in the textarea with a new game. Only one person needs to paste it: whoever clicks <b>Play</b> first instantly transmits and launches it on both phones.<br><br>Games save automatically on that person\'s phone when they click <b>Play</b>, under the name in the game\'s last parameter (the sample\'s is <b>cycles</b>). Pick a saved game from the dropdown on the code screen. The sample can\'t be overwritten, so give your own game a new one-word name to keep it.<br><br><i>Tip: paste the sample game from the textarea into an AI and ask it to make a new game like battleship.</i></p>',
+  intro: '<p>Click <b>Handshake</b> above to perform the camera/barcode handshake, and then click <b>Play</b>.<br><br><br><br><i>Tip: paste the sample game from the Play screen into an AI and ask it to make a new game like battleship, and then paste it back.</i></p>',
 
   // The source of the game function with the comment inserted just inside its opening brace.
   sample(game) {const src = game.toString(), i = src.indexOf('{') + 1;return src.slice(0, i) + '\n' + this.samplegamecomment + src.slice(i);}
