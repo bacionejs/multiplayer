@@ -10,6 +10,11 @@ Games define function game(link, side, area, name="mygame"): side is "a" or "b",
 element(tag, parent=game body, props): creates a DOM element, appends it to parent, assigns props, and returns it; shared with games.
 */
 
+function element(tag,parent=gbox,props){return Object.assign(parent.appendChild(parent.ownerDocument.createElement(tag)),props)}
+init();
+
+function init(){
+
 element("style",document.head,{textContent:`
   html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;color:#fff;font-family:monospace}body{display:flex;flex-direction:column;align-items:center;text-align:center}
   .toolbar{display:flex;flex-shrink:0;width:100%;background:#181818;border-bottom:2px solid #007acc}
@@ -60,7 +65,6 @@ function load(src,cb){
   };
   ifr.srcdoc=FRAME
 }
-function element(tag,parent=gbox,props){return Object.assign(parent.appendChild(parent.ownerDocument.createElement(tag)),props)}
 function start({fn,ifr}){link.reset();try{let r=fn(link,side,{w:ifr.clientWidth,h:ifr.clientHeight});typeof r=="function"&&(cleanup=r)}catch(e){return e}}
 function goBack(notify){notify&&link.send({sys:"back"});try{cleanup?.()}catch{}cleanup=0;running=0;link.reset();gbox.innerHTML="";show(cscreen);enable(play)}
 function enterCode(l,s){link=l;side=s;link.sys=onSys;if(typeof game=="function"){ssrc=game.toString();sname=gname(game)||""}cbox.value=ssrc;refresh();show(cscreen);enable(play)}
@@ -70,3 +74,6 @@ function hold(el,callback,timer){el.onpointerdown=_=>timer=setTimeout(callback,5
 function parseGame(src,W=window){if(/\b(function|const|let|var)\s+game\b/.test(src))try{let fn=new W.Function("link","side","area",src+"\nreturn typeof game=='function'?game:null")();if(fn)return fn}catch{}return new W.Function("link","side","area",src)}
 
 enable(hand)
+
+
+}
