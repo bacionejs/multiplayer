@@ -1,4 +1,8 @@
-// Instructions for this game live in comments.js
+/*
+sample.js: light-cycles game
+Instructions for this game live in comments.js
+*/
+
 function game(link, side, area, name="cycles") {
 
 // Game rules
