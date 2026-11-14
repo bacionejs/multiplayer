@@ -1,9 +1,9 @@
 /*handshake.js: WebRTC optical handshake via Data Matrix barcodes.*/
 
 /* handshake(container) returns a Promise that resolves to {link, side} once the phones are connected, and rejects on camera/scanner errors. */
-function handshake(container=document.body){
+function handshake(container){
 return new Promise((resolve,reject)=>{
-let el=(t,p=container)=>p.appendChild(document.createElement(t)),peer,chan,stream,last="",qr,answering=0,box=el("div"),can=el("canvas",box),ctx=can.getContext("2d"),vid=el("video",box),ovl=el("div",box),note=el("div",box);
+let el=(t,p=container)=>p.appendChild(document.createElement(t)),peer,chan,stream,last="",dm,answering=0,box=el("div"),can=el("canvas",box),ctx=can.getContext("2d"),vid=el("video",box),ovl=el("div",box),note=el("div",box);
 
 async function gather(pc,desc){
   let done=new Promise(r=>{pc.onicecandidate=e=>e.candidate||r();setTimeout(r,4000)});
@@ -11,13 +11,13 @@ async function gather(pc,desc){
   return sdpStrip(pc.localDescription.sdp)
 }
 function show(text){
-  qr?.remove();
+  dm?.remove();
   let[grid,n]=datamatrix(text),m=n+4,cell=Math.floor(Math.min(innerWidth*.6,innerHeight*.25)/m)||1,W=cell*m,c=document.createElement("canvas"),g=c.getContext("2d");
   c.width=c.height=W;
   g.fillStyle="#fff";g.fillRect(0,0,W,W);g.fillStyle="#000";
   grid.map((row,j)=>row.map((v,i)=>v&&g.fillRect((i+2)*cell,(j+2)*cell,cell,cell)));
   c.style="max-height:25vh;width:auto;height:auto;object-fit:contain";
-  box.prepend(qr=c)
+  box.prepend(dm=c)
 }
 function fail(e){stream?.getTracks().forEach(t=>t.stop());stream=0;box.remove();reject(e)}
 function launch(side){
