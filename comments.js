@@ -15,14 +15,14 @@ const COMMENTS = {
 
 /*
 API Definitions:
-function game(link, side, area, name="mygame").
-side is "a" or "b".
-area = {w,h}.
-name is used by the parent save parser
+function game(link, side, area, name="mygame")
 link.ready(startFn)
 link.send(obj)
 link.on=obj=>{}
-link.onclose to detect disconnects.
+link.onclose to detect disconnects
+side = "a" or "b"
+area = {w,h}
+name is used by the parent save parser
 */
 
 `,
