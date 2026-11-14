@@ -3,7 +3,6 @@ index.js: two-phone game shell.
 Shell docs, the sample's game API comment and the intro text live in comments.js.
 */
 
-function element(tag,parent,props){return Object.assign(parent.appendChild(parent.ownerDocument.createElement(tag)),props)}
 init();
 
 function init(){
@@ -51,7 +50,6 @@ function load(src,cb){
   ifr.onload=()=>{
     if(!ifr.isConnected)return;
     let win=ifr.contentWindow,fn;
-    win.element=(tag,parent=win.document.body,props)=>element(tag,parent,props);
     try{fn=parsegame(src,win)}catch(e){goback(false);return cb(null,e)}
     cb({fn,ifr})
   };
@@ -64,6 +62,7 @@ function save(src,fn){let name=gname(fn);if(!name)return;if(name==sname){if(src!
 function refresh(pick){return store("readonly",s=>s.getAllKeys()).catch(()=>[]).then(keys=>{let names=[...(sname?[sname]:[]),...keys.sort()];nbox.innerHTML="";names.forEach(n=>element("option",nbox,{textContent:n,value:n}));nbox.value=pick||sname||names[0]||""})}
 function hold(el,callback,timer){el.onpointerdown=_=>timer=setTimeout(callback,500);el.onpointerup=el.onpointercancel=_=>clearTimeout(timer)}hold(hand,()=>hand.disabled||connected({send(){},on(){},ready(f){f()},reset(){}},"a"));hand.oncontextmenu=()=>false
 function parsegame(src,W=window){if(/\b(function|const|let|var)\s+game\b/.test(src))try{let fn=new W.Function("link","side","area",src+"\nreturn typeof game=='function'?game:null")();if(fn)return fn}catch{}return new W.Function("link","side","area",src)}
+function element(tag,parent,props){return Object.assign(parent.appendChild(document.createElement(tag)),props)}
 
 enable(hand)
 

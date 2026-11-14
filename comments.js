@@ -19,7 +19,6 @@ link.ready(startFn): startFn runs on both phones together.
 area = {w,h}: pixels available to the game (already below the toolbar and inside padding). Size everything from this, not from innerWidth/innerHeight.
 link.send(obj) sends JSON to the other phone; set link.on=obj=>{} to receive, link.onclose to detect disconnects.
 name (4th parameter): ignored by the game; it is only the save key. If it is a one-word string default, the code screen saves the code under it on the phone that presses Play. Remove it or leave it empty to not save.
-element(tag, parent=game area, props): global helper that creates a DOM element, appends it to parent, assigns props (e.g. {textContent, className}), and returns it.
 Each game runs in its own same-origin iframe, so its timers, listeners and globals disappear when Back removes the iframe. This isolates games from the shell; it is not a security sandbox. A game may also return a cleanup function, which Back calls first.
 */`,
 

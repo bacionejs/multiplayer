@@ -4,7 +4,7 @@ Instructions for this game live in comments.js
 */
 
 function game(link, side, area, name="cycles") {
-
+let ele=(t,p=document.body)=>p.appendChild(document.createElement(t))
 // Game rules
 const GW=30,GH=40,D=2,TICK=160,MAX_QUEUE=2,BUZZ_MS=200;
 // Directions (index into DX/DY). Opposite directions share parity.
@@ -25,7 +25,7 @@ const S0={x:GW/3|0,y:GH/5|0},START=[S0,{x:GW-1-S0.x,y:GH-1-S0.y}];
 const sameAxis=(a,b)=>a%2==b%2;
 
 document.body.style="margin:0;background:#000;color:"+C.text+";font:16px monospace;text-align:center;user-select:none;touch-action:none";
-const msg=element("div"),can=element("canvas"),c2=can.getContext("2d"),stick=element("canvas"),sg=stick.getContext("2d"),pad=element("div");
+const msg=ele("div"),can=ele("canvas"),c2=can.getContext("2d"),stick=ele("canvas"),sg=stick.getContext("2d"),pad=ele("div");
 msg.style="padding:8px;min-height:1.4em";
 stick.style="display:block;margin:"+STICK_GAP+"px auto;position:relative;z-index:1;touch-action:none";
 stick.width=stick.height=2*J;
