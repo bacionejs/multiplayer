@@ -63,7 +63,7 @@ async function startCamera(s){
 box.style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;gap:8px;padding:8px;box-sizing:border-box;overflow:hidden;z-index:99";
 can.style="max-width:85vw;max-height:35vh;width:auto;height:auto;object-fit:contain;flex-shrink:1";
 note.style="color:#0f0;font:13px monospace;text-align:center";
-vid.hidden=1;vid.autoplay=vid.muted=vid.playsInline=true;
+vid.hidden=1;vid.autoplay=vid.muted=true;
 ovl.style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:20px sans-serif;color:#fff;background:rgba(0,128,0,.8);z-index:100;opacity:0;transition:opacity .3s;pointer-events:none";
 ovl.textContent="SCAN OK!";
 note.textContent="Point your camera at the barcode on the other phone";
@@ -107,4 +107,5 @@ function sdpUnstrip(s,[type,ufrag,pwd,fp,ip,port]=s.split("|")){
 
 
 }
+
 

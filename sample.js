@@ -1,5 +1,4 @@
-// Instructions for this game live in comments.js (COMMENTS.sample); index.js inserts them
-// at the top of this function when it is shown in the textarea.
+// Instructions for this game live in comments.js
 function game(link, side, area, name="cycles") {
 
 // Game rules
@@ -60,7 +59,7 @@ function step(){
   if(dead[0]||dead[1]){
     clearInterval(tm);phase="over";drawStick();
     let r="Draw";
-    if(dead[m]&&!dead[1-m]){r="You crashed";score[1]++;navigator.vibrate&&navigator.vibrate(BUZZ_MS)}
+    if(dead[m]&&!dead[1-m]){r="You crashed";score[1]++;navigator.vibrate(BUZZ_MS)}
     else if(!dead[m]){r="They crashed";score[0]++}
     msg.textContent=sc()+": "+r;
   }
@@ -108,4 +107,5 @@ c2.fillStyle=C.bg;c2.fillRect(0,0,can.width,can.height);drawStick();
 
 
 }
+
 
