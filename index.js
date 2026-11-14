@@ -36,7 +36,7 @@ let FRAME='<!DOCTYPE html><meta name="viewport" content="width=device-width,init
 
 db.catch(()=>{});
 nbox.onchange=()=>{let n=nbox.value;if(n==sname)cbox.value=ssrc;else store("readonly",s=>s.get(n)).then(c=>{if(c!=null)cbox.value=c}).catch(()=>{})};
-hand.onclick=()=>{enable();show(hscreen);hscreen.innerHTML="";handshake(hscreen).then(r=>entercode(r.link,r.side)).catch(e=>{alert("Handshake error: "+e.message);show(intro);enable(hand)})}
+hand.onclick=()=>{enable();show(hscreen);hscreen.innerHTML="";handshake(hscreen).then(r=>connected(r.link,r.side)).catch(e=>{alert("Handshake error: "+e.message);show(intro);enable(hand)})}
 play.onclick=()=>{if(running)return;let src=cbox.value;load(src,(g,err)=>{if(!g)return alert("Failed to load game code: "+err.message);link.send({sys:"load",code:src});save(src,g.fn);let e=start(g);if(e){goback(true);alert("Error running game: "+e.message)}})}
 back.onclick=()=>goback(true)
 
@@ -59,10 +59,10 @@ function load(src,cb){
 }
 function start({fn,ifr}){link.reset();try{let r=fn(link,side,{w:ifr.clientWidth,h:ifr.clientHeight});typeof r=="function"&&(cleanup=r)}catch(e){return e}}
 function goback(notify){notify&&link.send({sys:"back"});try{cleanup?.()}catch{}cleanup=0;running=0;link.reset();gbox.innerHTML="";show(cscreen);enable(play)}
-function entercode(l,s){link=l;side=s;link.sys=onsys;if(typeof game=="function"){sname=gname(game)||"";ssrc=COMMENTS.sample(game)}cbox.value=ssrc;refresh();show(cscreen);enable(play)}
+function connected(l,s){link=l;side=s;link.sys=onsys;if(typeof game=="function"){sname=gname(game)||"";ssrc=COMMENTS.sample(game)}cbox.value=ssrc;refresh();show(cscreen);enable(play)}
 function save(src,fn){let name=gname(fn);if(!name)return;if(name==sname){if(src!=ssrc)alert("sample can't be changed");return}store("readwrite",s=>s.put(src,name)).then(()=>refresh(name)).catch(()=>{})}
 function refresh(pick){return store("readonly",s=>s.getAllKeys()).catch(()=>[]).then(keys=>{let names=[...(sname?[sname]:[]),...keys.filter(k=>k!=sname).sort()];nbox.innerHTML="";names.forEach(n=>element("option",nbox,{textContent:n,value:n}));nbox.value=pick||sname||names[0]||""})}
-function hold(el,callback,timer){el.onpointerdown=_=>timer=setTimeout(callback,500);el.onpointerup=el.onpointercancel=_=>clearTimeout(timer)}hold(hand,()=>hand.disabled||entercode({send(){},on(){},ready(f){f()},reset(){}},"a"));hand.oncontextmenu=()=>false
+function hold(el,callback,timer){el.onpointerdown=_=>timer=setTimeout(callback,500);el.onpointerup=el.onpointercancel=_=>clearTimeout(timer)}hold(hand,()=>hand.disabled||connected({send(){},on(){},ready(f){f()},reset(){}},"a"));hand.oncontextmenu=()=>false
 function parsegame(src,W=window){if(/\b(function|const|let|var)\s+game\b/.test(src))try{let fn=new W.Function("link","side","area",src+"\nreturn typeof game=='function'?game:null")();if(fn)return fn}catch{}return new W.Function("link","side","area",src)}
 
 enable(hand)
