@@ -32,7 +32,6 @@ let link,side="a",ssrc="",sname="",running=0,cleanup,body=document.body,
 let FRAME='<!DOCTYPE html><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0;background:#000;color:#fff;font:16px monospace">',
   db=new Promise((ok,no)=>{let r=indexedDB.open("games",1);r.onupgradeneeded=()=>r.result.createObjectStore("games");r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}),
   store=(mode,op)=>db.then(d=>new Promise((ok,no)=>{let r=op(d.transaction("games",mode).objectStore("games"));r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})),
-  norm=s=>s.replace(/\r\n?/g,"\n"),
   gname=fn=>fn.toString().match(/^[^(]*\(\s*\w+\s*,\s*\w+\s*,\s*\w+\s*,\s*\w+\s*=\s*(["'])(\w+)\1\s*[,)]/)?.[2];
 
 db.catch(()=>{});
@@ -61,7 +60,7 @@ function load(src,cb){
 function start({fn,ifr}){link.reset();try{let r=fn(link,side,{w:ifr.clientWidth,h:ifr.clientHeight});typeof r=="function"&&(cleanup=r)}catch(e){return e}}
 function goBack(notify){notify&&link.send({sys:"back"});try{cleanup?.()}catch{}cleanup=0;running=0;link.reset();gbox.innerHTML="";show(cscreen);enable(play)}
 function enterCode(l,s){link=l;side=s;link.sys=onSys;if(typeof game=="function"){sname=gname(game)||"";ssrc=COMMENTS.sample(game)}cbox.value=ssrc;refresh();show(cscreen);enable(play)}
-function save(src,fn){let name=gname(fn);if(!name)return;if(name==sname){if(norm(src)!=norm(ssrc))alert("sample can't be changed");return}store("readwrite",s=>s.put(src,name)).then(()=>refresh(name)).catch(()=>{})}
+function save(src,fn){let name=gname(fn);if(!name)return;if(name==sname){if(src!=ssrc)alert("sample can't be changed");return}store("readwrite",s=>s.put(src,name)).then(()=>refresh(name)).catch(()=>{})}
 function refresh(pick){return store("readonly",s=>s.getAllKeys()).catch(()=>[]).then(keys=>{let names=[...(sname?[sname]:[]),...keys.filter(k=>k!=sname).sort()];nbox.innerHTML="";names.forEach(n=>element("option",nbox,{textContent:n,value:n}));nbox.value=pick||sname||names[0]||""})}
 function hold(el,callback,timer){el.onpointerdown=_=>timer=setTimeout(callback,500);el.onpointerup=el.onpointercancel=_=>clearTimeout(timer)}hold(hand,()=>hand.disabled||enterCode({send(){},on(){},ready(f){f()},reset(){}},"a"));hand.oncontextmenu=()=>false
 function parseGame(src,W=window){if(/\b(function|const|let|var)\s+game\b/.test(src))try{let fn=new W.Function("link","side","area",src+"\nreturn typeof game=='function'?game:null")();if(fn)return fn}catch{}return new W.Function("link","side","area",src)}
