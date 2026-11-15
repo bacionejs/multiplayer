@@ -84,7 +84,8 @@ handshake(container) returns a Promise that resolves to {link, side} once the ph
 */
 function handshake(container){
 return new Promise((resolve,reject)=>{
-let el=(t,p=container)=>p.appendChild(document.createElement(t)),peer,chan,stream,last="",dm,answering=0,box=el("div"),can=el("canvas",box),ctx=can.getContext("2d"),vid=el("video",box),ovl=el("div",box),note=el("div",box);
+let el=(t,p=container)=>p.appendChild(document.createElement(t)),peer,chan,stream,last="",dm,answering=0;
+let box=el("div"),can=el("canvas",box),ctx=can.getContext("2d"),vid=el("video",box),ovl=el("div",box),note=el("div",box);
 
 async function gather(pc,desc){
   let done=new Promise(r=>{pc.onicecandidate=e=>e.candidate||r();setTimeout(r,4000)});
