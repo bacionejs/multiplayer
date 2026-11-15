@@ -1,9 +1,20 @@
 /*
 sample.js: light-cycles game
-Instructions for this game live in comments.js
 */
 
 function game(link, side, area, name="cycles") {
+/*
+API Definitions:
+function game(link, side, area, name="mygame")
+link.ready(startFn)
+link.send(obj)
+link.on=obj=>{}
+link.onclose to detect disconnects
+side = "a" or "b"
+area = {w,h}
+name is parsed by the caller for saving into indexedDB
+*/
+
 let ele=(t,p=document.body)=>p.appendChild(document.createElement(t))
 // Game rules
 const GW=30,GH=40,D=2,TICK=160,MAX_QUEUE=2,BUZZ_MS=200;
