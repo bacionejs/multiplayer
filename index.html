@@ -78,10 +78,6 @@ enable(hand)
 
 
 
-/*
-WebRTC optical handshake via Data Matrix barcodes.
-handshake(container) returns a Promise that resolves to {link, side} once the phones are connected, and rejects on camera/scanner errors.
-*/
 function handshake(container){
 return new Promise((resolve,reject)=>{
 let el=(t,p=container)=>p.appendChild(document.createElement(t)),peer,chan,stream,last="",dm,answering=0;
@@ -155,7 +151,6 @@ navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(sta
 
 
 function makeLink(chan){
-  /* Game messages go to link.on(obj). Shell messages go to link.sys(obj) */
   let me=0,them=0,start,go=()=>me&&them&&(me=them=0,start()),
   link={
     send(o){try{chan.send(JSON.stringify(o))}catch{}},
