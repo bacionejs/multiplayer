@@ -9,7 +9,7 @@ Serverless multiplayer via webrtc/camera/barcode (**no** signal/stun/turn server
 
 This project is mainly about the serverless technique used and the sample game merely provides an end-to-end explanation.  
 <br>
-Paste your own game into the app and play head-to-head with your family.
+After the camera/barcode handshake, paste your own game into the app and play head-to-head with your family.
 
 ---
 
