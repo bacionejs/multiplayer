@@ -5,14 +5,10 @@ Flow: Handshake connects the phones (handshake(container) resolves to {link, sid
 Shell messages travel over the same link as game messages but use a {sys:...} envelope that link.sys() receives, so games can never overwrite them: {sys:"load",code} starts a game, {sys:"back"} returns both phones to the code screen, {sys:"error",msg} reports that the other phone couldn't load or run the game. Games only ever see link.on for their own messages.
 -->
 
-
 <!DOCTYPE html>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Two-Phone Game Loader</title>
-<body>
-<script src="datamatrix.js"></script>
-<script src="sample.js"></script>
-<script>
+<body><script src="datamatrix.js"></script><script src="sample.js"></script><script>
 
 init();
 
