@@ -3,8 +3,7 @@ sample.js: light-cycles game
 */
 
 function game(link, side, area, name="cycles") {
-/*
-API Definitions:
+/* API
 function game(link, side, area, name="mygame")
 link.ready(startFn)
 link.send(obj)
