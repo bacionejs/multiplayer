@@ -29,8 +29,8 @@ let link,side,ssrc="",sname="",running=0,cleanup,body=document.body,
   intro=makescreen({className:"screen intro on"}),
   hscreen=makescreen(),cscreen=makescreen({className:"screen code"}),
   nbox=element("select",cscreen),cbox=element("textarea",cscreen),gbox=makescreen({className:"screen game"}),
-  show=s=>[...body.children].forEach(x=>x.classList.toggle("on",x==s)),enable=b=>[hand,play,back].forEach(x=>x.disabled=x!=b)
-let FRAME='<!DOCTYPE html><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0;background:#000;color:#fff;font:16px monospace">',
+  show=s=>[...body.children].forEach(x=>x.classList.toggle("on",x==s)),enable=b=>[hand,play,back].forEach(x=>x.disabled=x!=b),
+  FRAME='<!DOCTYPE html><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0;background:#000;color:#fff;font:16px monospace">',
   db=new Promise((ok,no)=>{let r=indexedDB.open("games",1);r.onupgradeneeded=()=>r.result.createObjectStore("games");r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}),
   store=(mode,op)=>db.then(d=>new Promise((ok,no)=>{let r=op(d.transaction("games",mode).objectStore("games"));r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})),
   gname=fn=>fn.toString().match(/^[^(]*\(\s*\w+\s*,\s*\w+\s*,\s*\w+\s*,\s*\w+\s*=\s*(["'])(\w+)\1\s*[,)]/)?.[2];
