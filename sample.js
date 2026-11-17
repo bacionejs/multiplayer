@@ -2,7 +2,7 @@
 sample.js: light-cycles game
 */
 
-function game(link, side, area, name="cycles") {
+function game(link, side, area, name="sample") {
 /* API
 function game(link, side, area, name="mygame")
 link.ready(startFn)
