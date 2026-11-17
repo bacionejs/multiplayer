@@ -12,6 +12,8 @@ Shell messages travel over the same link as game messages but use a {sys:...} en
 
 init();
 
+function element(tag,parent,props){let e=document.createElement(tag);parent?.append(e);return Object.assign(e,props)}
+
 function init(){
 
 element("style",document.head,{textContent:`
@@ -21,8 +23,7 @@ element("style",document.head,{textContent:`
   .screen{display:none;flex:1;min-height:0;width:100%;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;padding:20px;overflow:hidden;position:relative}.screen.on{display:flex}
   .intro,.code{overflow-y:auto;justify-content:flex-start}
   .game{background:#000;contain:paint}
-  .game iframe{flex:1;min-height:0;width:100%;border:0;background:#000}
-  .intro p{font-size:13px;color:#aaa;max-width:320px;line-height:1.5;text-align:left}
+  .game iframe{flex:1;min-height:0;width:100%;border:0}
   .code textarea{width:100%;max-width:420px;height:60vh;background:#000;color:#0f0;border:1px solid #444;padding:10px;font:12px monospace;box-sizing:border-box;resize:vertical;text-align:left}
   .code select{width:100%;max-width:420px;margin-bottom:8px;padding:10px;background:#222;color:#fff;border:1px solid #444;font:14px monospace;box-sizing:border-box}`})
 
@@ -30,7 +31,7 @@ let link,side,ssrc="",sname="",running=0,cleanup,body=document.body,
   toolbar=element("div",body,{className:"toolbar"}),
   [hand,play,back]=["Handshake","Play","Back"].map(text=>element("button",toolbar,{textContent:text})),
   makescreen=props=>element("div",body,{className:"screen",...props}),
-  intro=makescreen({className:"screen intro on",innerHTML:""}),
+  intro=makescreen({className:"screen intro on"}),
   hscreen=makescreen(),cscreen=makescreen({className:"screen code"}),
   nbox=element("select",cscreen),cbox=element("textarea",cscreen),gbox=makescreen({className:"screen game"}),
   show=s=>[...body.children].forEach(x=>x.classList.toggle("on",x==s)),enable=b=>[hand,play,back].forEach(x=>x.disabled=x!=b)
@@ -42,8 +43,8 @@ let FRAME='<!DOCTYPE html><meta name="viewport" content="width=device-width,init
 
 db.catch(()=>{});
 nbox.onchange=()=>{let n=nbox.value;if(n==sname)cbox.value=ssrc;else store("readonly",s=>s.get(n)).then(c=>{if(c!=null)cbox.value=c}).catch(()=>{})};
-hand.onclick=()=>{enable();show(hscreen);hscreen.innerHTML="";handshake(hscreen).then(r=>connected(r.link,r.side)).catch(e=>{alert("Handshake error: "+e.message);show(intro);enable(hand)})}
-play.onclick=()=>{if(running)return;let src=cbox.value;load(src,(g,err)=>{if(!g)return alert("Failed to load game code: "+err.message);link.send({sys:"load",code:src});save(src,g.fn);let e=start(g);if(e){goback(true);alert("Error running game: "+e.message)}})}
+hand.onclick=()=>{enable();show(hscreen);handshake(hscreen).then(r=>connected(r.link,r.side)).catch(e=>{alert("Handshake error: "+e.message);show(intro);enable(hand)})}
+play.onclick=()=>{let src=cbox.value;load(src,(g,err)=>{if(!g)return alert("Failed to load game code: "+err.message);link.send({sys:"load",code:src});save(src,g.fn);let e=start(g);if(e){goback(true);alert("Error running game: "+e.message)}})}
 back.onclick=()=>goback(true)
 
 function onsys(m){
@@ -69,54 +70,32 @@ function save(src,fn){let name=gname(fn);if(!name)return;if(name==sname){if(src!
 function refresh(pick){return store("readonly",s=>s.getAllKeys()).catch(()=>[]).then(keys=>{let names=[...(sname?[sname]:[]),...keys.sort()];nbox.innerHTML="";names.forEach(n=>element("option",nbox,{textContent:n,value:n}));nbox.value=pick||sname||names[0]||""})}
 function hold(el,callback,timer){el.onpointerdown=_=>timer=setTimeout(callback,500);el.onpointerup=el.onpointercancel=_=>clearTimeout(timer)}hold(hand,()=>hand.disabled||connected({send(){},on(){},ready(f){f()},reset(){}},"a"));hand.oncontextmenu=()=>false
 function parsegame(src,W=window){if(/\b(function|const|let|var)\s+game\b/.test(src))try{let fn=new W.Function("link","side","area",src+"\nreturn typeof game=='function'?game:null")();if(fn)return fn}catch{}return new W.Function("link","side","area",src)}
-function element(tag,parent,props){return Object.assign(parent.appendChild(document.createElement(tag)),props)}
 
 enable(hand)
 
 }
 
-
-
-
-
-
-
-
-
-
 function handshake(container){return new Promise((resolve,reject)=>{
-let peer,chan,stream,last="",dm,answering=0;
-let box=el("div"),can=el("canvas",box),ctx=can.getContext("2d"),vid=el("video",box),ovl=el("div",box),note=el("div",box);
+let peer,chan,stream,last="",dm,answering=0,
+  box=element("div",container,{style:"position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;gap:8px;padding:8px;box-sizing:border-box;overflow:hidden"}),
+  ctx=element("canvas",box,{style:"max-width:85vw;max-height:35vh;object-fit:contain"}).getContext("2d"),
+  vid=element("video",box,{hidden:true,muted:true}),
+  ovl=element("div",box,{textContent:"SCAN OK!",style:"position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:20px sans-serif;background:rgba(0,128,0,.8);opacity:0;transition:opacity .3s;pointer-events:none"}),
+  note=element("div",box,{textContent:"Point your camera at the barcode on the other phone",style:"color:#0f0;font-size:13px"});
 
-box.style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;gap:8px;padding:8px;box-sizing:border-box;overflow:hidden;z-index:99";
-can.style="max-width:85vw;max-height:35vh;width:auto;height:auto;object-fit:contain;flex-shrink:1";
-note.style="color:#0f0;font:13px monospace;text-align:center";
-ovl.style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:20px sans-serif;color:#fff;background:rgba(0,128,0,.8);z-index:100;opacity:0;transition:opacity .3s;pointer-events:none";
-ovl.textContent="SCAN OK!";
-note.textContent="Point your camera at the barcode on the other phone";
-
-vid.hidden=1;vid.autoplay=vid.muted=true;
 navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(startCamera).catch(e=>fail(Error("Camera or scanner error: "+e.message)))
 
-function el(t,p=container){return p.appendChild(document.createElement(t))}
-function fail(e){stream?.getTracks().forEach(t=>t.stop());stream=0;box.remove();reject(e)}
-function launch(side){stream?.getTracks().forEach(t=>t.stop());stream=0;box.remove();resolve({link:makeLink(chan),side})}
-async function offer(){peer=new RTCPeerConnection;chan=peer.createDataChannel("x");chan.onopen=()=>launch("a");show(await gather(peer,await peer.createOffer()))}
-
-async function gather(pc,desc){
-  let done=new Promise(r=>{pc.onicecandidate=e=>e.candidate||r();setTimeout(r,4000)});
-  await pc.setLocalDescription(desc);await done;
-  return sdpStrip(pc.localDescription.sdp)
-}
-
-function show(text){
-  dm?.remove();
-  let[grid,n]=datamatrix(text),m=n+4,cell=Math.floor(Math.min(innerWidth*.6,innerHeight*.25)/m)||1,W=cell*m,c=document.createElement("canvas"),g=c.getContext("2d");
-  c.width=c.height=W;
-  g.fillStyle="#fff";g.fillRect(0,0,W,W);g.fillStyle="#000";
-  grid.map((row,j)=>row.map((v,i)=>v&&g.fillRect((i+2)*cell,(j+2)*cell,cell,cell)));
-  c.style="max-height:25vh;width:auto;height:auto;object-fit:contain";
-  box.prepend(dm=c)
+async function startCamera(s){
+  stream=vid.srcObject=s;await vid.play();
+  let det=new BarcodeDetector({formats:["data_matrix"]});
+  async function loop(){
+    if(!stream)return;
+    ({videoWidth:ctx.canvas.width,videoHeight:ctx.canvas.height}=vid);
+    ctx.drawImage(vid,0,0,ctx.canvas.width,ctx.canvas.height);
+    try{let[hit]=await det.detect(ctx.canvas);hit&&scanned(hit.rawValue)}catch{}
+    requestAnimationFrame(loop)
+  }
+  offer();loop()
 }
 
 async function scanned(s){
@@ -126,7 +105,7 @@ async function scanned(s){
   if(answering||!"oa".includes(k))return;
   try{
     if(k=="o"){
-      answering=1;can.style.display="none";
+      answering=1;ctx.canvas.style.display="none";
       peer=new RTCPeerConnection;
       peer.ondatachannel=e=>{chan=e.channel;chan.onopen=()=>launch("b")};
       await peer.setRemoteDescription({type:"offer",sdp:sdpUnstrip(s)});
@@ -137,17 +116,19 @@ async function scanned(s){
   }catch(e){note.textContent=e.message}
 }
 
-async function startCamera(s){
-  stream=vid.srcObject=s;await vid.play();
-  let det=new BarcodeDetector({formats:["data_matrix"]});
-  async function loop(){
-    if(!stream)return;
-    ({videoWidth:can.width,videoHeight:can.height}=vid);
-    ctx.drawImage(vid,0,0,can.width,can.height);
-    try{let[hit]=await det.detect(can);hit&&scanned(hit.rawValue)}catch{}
-    requestAnimationFrame(loop)
-  }
-  offer();loop()
+function show(text){
+  dm?.remove();
+  let[grid,n]=datamatrix(text),m=n+4,cell=Math.floor(Math.min(innerWidth*.6,innerHeight*.25)/m)||1,W=cell*m,
+    c=element("canvas",null,{width:W,height:W,style:"max-height:25vh;object-fit:contain"}),g=c.getContext("2d");
+  g.fillStyle="#fff";g.fillRect(0,0,W,W);g.fillStyle="#000";
+  grid.forEach((row,j)=>row.forEach((v,i)=>v&&g.fillRect((i+2)*cell,(j+2)*cell,cell,cell)));
+  box.prepend(dm=c)
+}
+
+async function gather(pc,desc){
+  let done=new Promise(r=>{pc.onicecandidate=e=>e.candidate||r();setTimeout(r,4000)});
+  await pc.setLocalDescription(desc);await done;
+  return sdpStrip(pc.localDescription.sdp)
 }
 
 function makeLink(chan){
@@ -162,6 +143,11 @@ function makeLink(chan){
   chan.onclose=()=>link.onclose?.();
   return link
 }
+
+function fail(e){stop();reject(e)}
+function launch(side){stop();resolve({link:makeLink(chan),side})}
+function stop(){stream?.getTracks().forEach(t=>t.stop());stream=0;box.remove()}
+async function offer(){peer=new RTCPeerConnection;chan=peer.createDataChannel("x");chan.onopen=()=>launch("a");show(await gather(peer,await peer.createOffer()))}
 
 function H2B(hex){return btoa(String.fromCharCode(...(hex.match(/../g)||[]).map(x=>parseInt(x,16)))).replace(/=/g,"")}
 function B2H(b64){return [...atob(b64)].map(c=>(256+c.charCodeAt()).toString(16).slice(1)).join(":").toUpperCase()}
@@ -178,14 +164,5 @@ function sdpUnstrip(s,[type,ufrag,pwd,fp,ip,port]=s.split("|")){
 }
 
 })}
-
-
-
-
-
-
-
-
-
 
 </script></body>
