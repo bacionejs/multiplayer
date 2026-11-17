@@ -99,10 +99,7 @@ async function startcamera(s){
 }
 
 async function scanned(s){
-  if(s==last||s.length<20)return;
-  last=s;
-  let k=s[0];
-  if(answering||!"oa".includes(k))return;
+  if(s==last||s.length<20)return;last=s;let k=s[0];if(answering||!"oa".includes(k))return;
   try{
     if(k=="o"){
       answering=1;ctx.canvas.style.display="none";
