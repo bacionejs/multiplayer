@@ -105,11 +105,6 @@ function showbarcode(text){
   c.fillStyle="#fff";c.fillRect(0,0,W,W);c.fillStyle="#000";grid.forEach((row,j)=>row.forEach((v,i)=>v&&c.fillRect((i+2)*cell,(j+2)*cell,cell,cell)));
   box.prepend(dm=c.canvas)
 }
-async function gather(pc,desc){
-  let done=new Promise(r=>{pc.onicecandidate=e=>e.candidate||r();setTimeout(r,4000)});
-  await pc.setLocalDescription(desc);await done;
-  return sdpstrip(pc.localDescription.sdp)
-}
 function makelink(chan){
   let me=0,them=0,start,go=()=>me&&them&&(me=them=0,start()),
   link={
@@ -139,6 +134,7 @@ function fail(e){stop();reject(e)}
 function launch(side){stop();resolve({link:makelink(chan),side})}
 function stop(){stream?.getTracks().forEach(t=>t.stop());stream=0;box.remove()}
 async function offer(){peer=new RTCPeerConnection;chan=peer.createDataChannel("x");chan.onopen=()=>launch("a");showbarcode(await gather(peer,await peer.createOffer()))}
+async function gather(pc,desc){let done=new Promise(r=>{pc.onicecandidate=e=>e.candidate||r();setTimeout(r,4000)});await pc.setLocalDescription(desc);await done;return sdpstrip(pc.localDescription.sdp)}
 })}
 
 </script></body>
