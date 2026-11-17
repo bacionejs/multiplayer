@@ -102,8 +102,7 @@ async function scanned(s){
 function showbarcode(text){
   dm?.remove();
   let[grid,n]=datamatrix(text),m=n+4,cell=Math.floor(Math.min(innerWidth*.6,innerHeight*.25)/m)||1,W=cell*m,c=element("canvas",null,{width:W,height:W,style:"max-height:25vh;object-fit:contain"}).getContext("2d");
-  c.fillStyle="#fff";c.fillRect(0,0,W,W);c.fillStyle="#000";
-  grid.forEach((row,j)=>row.forEach((v,i)=>v&&c.fillRect((i+2)*cell,(j+2)*cell,cell,cell)));
+  c.fillStyle="#fff";c.fillRect(0,0,W,W);c.fillStyle="#000";grid.forEach((row,j)=>row.forEach((v,i)=>v&&c.fillRect((i+2)*cell,(j+2)*cell,cell,cell)));
   box.prepend(dm=c.canvas)
 }
 async function gather(pc,desc){
