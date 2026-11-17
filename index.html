@@ -124,7 +124,6 @@ function sdpstrip(sdp){
     cands=(sdp.match(/^a=candidate:.+$/gm)||[]).map(l=>l.split(" ")).filter(c=>/udp/i.test(c[2])),
     c=cands.find(c=>!c[4].includes(":"))||cands[0],
     f=[/^a=setup:active/m.test(sdp)?"a":"o",g("ice-ufrag:"),g("ice-pwd:"),H2B((g("fingerprint:sha-256 ")||"").replace(/:/g,"")),c?.[4],c?.[5]];
-  if(f.some(v=>!v))throw Error("SDP missing a field (no UDP candidate?)");
   return f.join("|")
 }
 function sdpunstrip(s,[type,ufrag,pwd,fp,ip,port]=s.split("|")){
