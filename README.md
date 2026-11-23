@@ -20,6 +20,6 @@ After the camera/barcode `Handshake`, paste **your own game** into the app and `
 
 **Developer's Note:**  
 <br>
-While this project is somewhat complete, it's primarily a proof of concept. I recommend creating your own solution tailored to your specific needs. You may even want to drop the barcode handshake, since setting up your own local game server is relatively trivial, and the barcode handshake can become cumbersome when iterating during game development.
+While this project is somewhat complete, it's primarily a proof of concept. I recommend creating your own solution tailored to your specific needs. You may even want to drop the barcode handshake, since setting up your own local game server is relatively trivial, and the barcode handshake can become exhausting when iterating during game development.
 
 ---
