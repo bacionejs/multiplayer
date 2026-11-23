@@ -18,4 +18,5 @@ After the camera/barcode `Handshake`, optionally paste **your own game** into th
 
 **Developer's Note:**
 
-This project represents a cleaned-up version, with a simpler game sample and a flexible shell, of my [entry](https://js13kgames.com/2025/games/byte-armada) for the JS13KGames 2025 competition. This approach doesn't really fulfill the spirit of online multiplayer, which aims to support all devices, more than two players, and connections across the globe. It's a much narrower, self-contained experiment, and it would probably be better to set up a conventional game server.
+This project represents a cleaned-up version, with a simpler game sample and a flexible shell, of my [entry](https://js13kgames.com/2025/games/byte-armada) for the JS13KGames 2025 competition. It's a narrow, self-contained experiment, and it would be better to set up a conventional game server, supporting all devices, many players and connections across the globe. 
+
