@@ -24,4 +24,4 @@ My original plan was to exchange the SDP handshake through an instant messenger,
 
 This approach doesn't really fulfill the spirit of the Online category, which aims to support all devices, more than two players, and connections across the globe. It's a much narrower, self-contained experiment.
 
-If you're not constrained, it would probably be better to set up a local game server. It's relatively trivial, and the barcode handshake becomes frustrating when iterating during game development.
+If you're not constrained, it would probably be better to set up a local game server. It's relatively trivial, and the barcode handshake becomes frustrating when iterating during development.
