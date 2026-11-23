@@ -18,7 +18,7 @@ After the camera/barcode `Handshake`, paste **your own game** into the app and `
 
 ---
 
-**History:**  
+**Developer's Note:**  
 <br>
 This project originated during the JS13KGames 2025 competition as [Byte-Armada](https://js13kgames.com/2025/games/byte-armada), when the Online category had previously been discontinued due to the lack of a viable free solution for multiplayer connectivity. Mid-competition, the category was resurrected after a viable solution was found. But the idea still lives on in my head, and this project represents a cleaned-up version with a simpler game sample and a flexible shell.
 
