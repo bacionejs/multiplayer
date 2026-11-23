@@ -20,4 +20,10 @@ After the camera/barcode `Handshake`, paste **your own game** into the app and `
 
 **History:**  
 <br>
-This project originated during the JS13KGames 2025 competition as [Byte-Armada](https://js13kgames.com/2025/games/byte-armada), when the server category had previously been discontinued due to the lack of a viable free multiplayer server solution. Mid-competition, the category was resurrected after a viable solution was found. But the idea still lives on in my head, and this project represents a cleaned-up version with a simpler game sample and a flexible shell. However, if you're not constrained, it would probably be better to set up a local game server. It's relatively trivial, and the barcode handshake becomes frustrating when iterating during game development.
+This project originated during the JS13KGames 2025 competition as ["Byte-Armada"](https://js13kgames.com/2025/games/byte-armada), when the Online category had previously been discontinued due to the lack of a viable free solution for multiplayer connectivity. Mid-competition, the category was resurrected after a viable solution was found. But the idea still lives on in my head, and this project represents a cleaned-up version with a simpler game sample and a flexible shell.
+
+The original plan was to exchange SDP through an instant messenger, until I realized that would depend on an external service and server, neither of which was permitted by the competition. That eventually led to the barcode handshake.
+
+This approach doesn't really fulfill the spirit of the Online category, which aims to support all devices, more than two players, and connections across the globe. It's a much narrower, self-contained experiment.
+
+If you're not constrained, it would probably be better to set up a local game server. It's relatively trivial, and the barcode handshake becomes frustrating when iterating during game development.
