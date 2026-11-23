@@ -18,15 +18,7 @@ After the camera/barcode `Handshake`, paste **your own game** into the app and `
 
 ---
 
-**Developer's Note:**  
-<br>
-Although this project is functional, it's primarily a proof of concept. I recommend creating your own solution tailored to your specific needs. You may even want to drop the barcode handshake, since setting up your own local game server is relatively trivial, and the barcode handshake can become exhausting when iterating during game development.
-
----
-
 **History:**  
 <br>
-This project originated during the JS13KGames 2025 competition as [Byte-Armada](https://js13kgames.com/2025/games/byte-armada), when the server category had previously been discontinued due to the lack of a viable free multiplayer server solution. Mid-competition, the category was resurrected after a viable solution was found. But the idea still lives on in my head, and this project represents a cleaned-up version with a simpler game sample and a flexible shell.
-
-
+This project originated during the JS13KGames 2025 competition as [Byte-Armada](https://js13kgames.com/2025/games/byte-armada), when the server category had previously been discontinued due to the lack of a viable free multiplayer server solution. Mid-competition, the category was resurrected after a viable solution was found. But the idea still lives on in my head, and this project represents a cleaned-up version with a simpler game sample and a flexible shell. However, if you're not constrained like I was at the time, it would probably be better for you to set up a local game server, because it's trivial and a barcode handshake is frustrating while iterating during game development.
 
