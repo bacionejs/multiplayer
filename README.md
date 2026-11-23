@@ -10,7 +10,7 @@ Serverless multiplayer via webrtc/camera/barcode (**no** signal/stun/turn server
 
 This project is mainly about the serverless technique used and the **sample game** merely provides an end-to-end explanation.  
 <br>
-After the camera/barcode `Handshake`, paste **your own game** into the app and `Play` head-to-head with your family.  
+After the camera/barcode `Handshake`, optionally paste **your own game** into the app and `Play` head-to-head with your family.  
 <br>
 [Try It 🎮](https://bacionejs.github.io/multiplayer)
 
