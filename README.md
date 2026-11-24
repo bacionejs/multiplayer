@@ -13,7 +13,7 @@ This project is mainly about the serverless technique used and the sample game m
 
 After the camera/barcode `Handshake`, optionally paste your own game into the app and `Play` head-to-head with your family.  
 <br>
-[Try It 🎮](https://bacionejs.github.io/multiplayer)
+[Try It 🎮](https://bacionejs.github.io/multiplayer) (includes game)
 
 ---
 
