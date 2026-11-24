@@ -1,5 +1,4 @@
-<img width="100%" alt="2 phones playing game" src="https://github.com/user-attachments/assets/87fda14a-2fda-4276-b072-dca5d39fe6a5" />
-
+<img width="100%" alt="2 phones playing game" src="https://github.com/user-attachments/assets/2774aaa2-ee6e-4bd2-b751-44fb5aa64667" />
 
 Serverless multiplayer via webrtc/camera/barcode (**no** signal/stun/turn servers).  
 
