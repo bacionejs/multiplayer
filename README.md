@@ -16,3 +16,9 @@ After the camera/barcode `Handshake`, optionally paste your own game into the ap
 <br>
 [Try It 🎮](https://bacionejs.github.io/multiplayer)
 
+---
+
+The source-code fits on a 3x5 card  
+
+<a href="https://bacionejs.github.io/bacionejs/viewsource.html?b=1&file=https://raw.githubusercontent.com/bacionejs/multiplayer/main/index.html" target="_blank"><img width="200" src="https://github.com/user-attachments/assets/150c534f-3ecf-4232-a70e-7935570d3d05" /></a>
+
