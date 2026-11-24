@@ -5,7 +5,7 @@ Serverless multiplayer via webrtc/camera/barcode (**no** signal/stun/turn server
 
 This project is mainly about the serverless technique used and the **sample game** merely provides an end-to-end explanation.  
 
-While the simplicity is seductive, it's recommended that you use a conventional game server.  
+While the simplicity of serverless is seductive, it's recommended that you use a conventional game server.  
 
 **No external dependencies.**  
 **Needs two Android Chrome phones on the same hotspot.**  
