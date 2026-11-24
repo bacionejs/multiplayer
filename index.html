@@ -1,140 +1,75 @@
-<!-- index.html
-Serverless multiplayer via webrtc/camera/barcode (no signal/stun/turn servers). 
-Shows a toolbar (Handshake / Play / Back) and runs a game on both phones.
-Flow: Handshake connects the phones (handshake(container) resolves to {link, side}), the code screen shows the game source in a textarea, and Play sends that code to the other phone and launches it on both. Back returns BOTH phones to the code screen. Long-press Handshake for a single-device dev bypass.
-Shell messages travel over the same link as game messages but use a {sys:...} envelope that link.sys() receives, so games can never overwrite them: {sys:"load",code} starts a game, {sys:"back"} returns both phones to the code screen, {sys:"error",msg} reports that the other phone couldn't load or run the game. Games only ever see link.on for their own messages.
--->
+<!DOCTYPE html><meta name=viewport content="width=device-width,initial-scale=1"><style>html,body{margin:0;height:100%;overflow:hidden;background:#111;color:#fff;font:14px monospace}body{display:flex;flex-direction:column;text-align:center}
+  .t{display:flex;border-bottom:2px solid #07c}button{flex:1;padding:14px;background:#222;color:#555;border:0;font:inherit;user-select:none}button:enabled{background:#07c;color:#fff}
+  .s{display:none;flex:1;min-height:0;flex-direction:column;align-items:center;justify-content:center;padding:20px;position:relative;overflow:hidden}.on{display:flex}
+  .c{justify-content:flex-start;overflow:auto}.g{background:#000;contain:paint}iframe{flex:1;width:100%;border:0}
+  textarea,select{width:100%;max-width:420px;box-sizing:border-box;background:#000;color:#0f0;border:1px solid #444;font:12px monospace}textarea{height:60vh}select{margin-bottom:8px}
+</style><body><script src=sample.js></script><script>(()=>{let 
+FRAME='<!DOCTYPE html><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0;background:#000;color:#fff;font:16px monospace">',
+E=(t,p,o,e=document.createElement(t))=>(p?.append(e),Object.assign(e,o)),B=document.body,L,I,A="",M="",R,C,T=E("div",B,{className:"t"}),
+[H,P,K]=["Handshake","Play","Back"].map(x=>E("button",T,{textContent:x})),S=c=>E("div",B,{className:"s "+c}),hs=S(""),cs=S("c"),N=E("select",cs),X=E("textarea",cs),G=S("g"),show=s=>[...B.children].map(x=>x.classList.toggle("on",x==s)),
+en=b=>[H,P,K].map(x=>x.disabled=x!=b),
+gname=f=>f.toString().match(/^[^(]*\(\s*\w+\s*,\s*\w+\s*,\s*\w+\s*,\s*\w+\s*=\s*(["'])(\w+)\1\s*[,)]/)?.[2],
+parse=(s,W)=>{if(/\b(function|const|let|var)\s+game\b/.test(s))try{let f=new W.Function("link","side","area",s+"\nreturn typeof game=='function'?game:null")();if(f)return f}catch{}return new W.Function("link","side","area",s)},
+load=(s,cb)=>{R=1;show(G);en(K);G.innerHTML="";let f=E("iframe",G);f.onload=()=>{if(!f.isConnected)return;let fn;try{fn=parse(s,f.contentWindow)}catch(e){goback();return cb(0,e)}cb({fn,f})};f.srcdoc=FRAME},
+start=({fn,f})=>{L.reset();try{C=fn(L,I,{w:f.clientWidth,h:f.clientHeight})}catch(e){return e}},
+goback=n=>{n&&L.send({sys:"back"});try{C?.()}catch{}C=R=0;L.reset();G.innerHTML="";show(cs);en(P)},
+refresh=p=>{N.innerHTML="";let n=[...M?[M]:[],...Object.keys(localStorage).sort()];n.map(v=>E("option",N,{textContent:v}));N.value=p||M||n[0]||""},
+save=(s,fn)=>{let n=gname(fn);n&&(n==M?s!=A&&alert("sample can't be changed"):(localStorage[n]=s,refresh(n)))},
+onsys=m=>{
+  if(m.sys=="load"){if(R||typeof m.code!="string")return;X.value=m.code;load(m.code,(g,e)=>{e||=start(g);if(e){L.send({sys:"error",msg:e.message});g&&goback();alert("Received game failed: "+e.message)}})}
+  else if(m.sys=="back")R&&goback();
+  else if(m.sys=="error"&&R){goback();alert("The other phone couldn't run the game: "+m.msg)}},
+connected=(l,s)=>{L=l;I=s;L.sys=onsys;if(typeof game=="function"){M=gname(game)||"";A=game.toString()}X.value=A;refresh();show(cs);en(P)};
+N.onchange=()=>X.value=N.value==M?A:localStorage[N.value]||X.value;
+H.onclick=()=>{en();show(hs);handshake(hs).then(r=>connected(r.link,r.side)).catch(e=>{alert("Handshake error: "+e.message);show(0);en(H)})};
+P.onclick=()=>{let s=X.value;load(s,(g,e)=>{if(!g)return alert("Failed to load game code: "+e.message);L.send({sys:"load",code:s});save(s,g.fn);(e=start(g))&&(goback(1),alert("Error running game: "+e.message))})};
+K.onclick=()=>goback(1);
+H.oncontextmenu=()=>(H.disabled||connected({send(){},on(){},ready(f){f()},reset(){}},"a"),!1);
+en(H);
 
-<!DOCTYPE html><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Two-Phone Game Loader</title><body><script src="datamatrix.js"></script><script src="sample.js"></script><script>
-
-init();
-
-function element(tag,parent,props){let e=document.createElement(tag);parent?.append(e);return Object.assign(e,props)}
-
-function init(){
-element("style",document.head,{textContent:`
-  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111;color:#fff;font-family:monospace}body{display:flex;flex-direction:column;align-items:center;text-align:center}
-  .toolbar{display:flex;flex-shrink:0;width:100%;background:#181818;border-bottom:2px solid #007acc}
-  .toolbar button{flex:1;padding:14px;background:#222;color:#555;border:0;border-right:1px solid #111;font:14px monospace;user-select:none}.toolbar button:enabled{background:#007acc;color:#fff}
-  .screen{display:none;flex:1;min-height:0;width:100%;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;padding:20px;overflow:hidden;position:relative}.screen.on{display:flex}
-  .intro,.code{overflow-y:auto;justify-content:flex-start}
-  .game{background:#000;contain:paint}
-  .game iframe{flex:1;min-height:0;width:100%;border:0}
-  .code textarea{width:100%;max-width:420px;height:60vh;background:#000;color:#0f0;border:1px solid #444;padding:10px;font:12px monospace;box-sizing:border-box;resize:vertical;text-align:left}
-  .code select{width:100%;max-width:420px;margin-bottom:8px;padding:10px;background:#222;color:#fff;border:1px solid #444;font:14px monospace;box-sizing:border-box}`})
-let link,side,ssrc="",sname="",running=0,cleanup,body=document.body,
-  toolbar=element("div",body,{className:"toolbar"}),
-  [hand,play,back]=["Handshake","Play","Back"].map(text=>element("button",toolbar,{textContent:text})),
-  makescreen=props=>element("div",body,{className:"screen",...props}),
-  intro=makescreen({className:"screen intro on"}),
-  hscreen=makescreen(),cscreen=makescreen({className:"screen code"}),
-  nbox=element("select",cscreen),cbox=element("textarea",cscreen),gbox=makescreen({className:"screen game"}),
-  show=s=>[...body.children].forEach(x=>x.classList.toggle("on",x==s)),enable=b=>[hand,play,back].forEach(x=>x.disabled=x!=b),
-  FRAME='<!DOCTYPE html><meta name="viewport" content="width=device-width,initial-scale=1"><body style="margin:0;background:#000;color:#fff;font:16px monospace">',
-  req=r=>new Promise((ok,no)=>{r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)}),
-  db=req(Object.assign(indexedDB.open("games",1),{onupgradeneeded(){this.result.createObjectStore("games")}})),
-  store=(mode,op)=>db.then(d=>req(op(d.transaction("games",mode).objectStore("games")))),
-  gname=fn=>fn.toString().match(/^[^(]*\(\s*\w+\s*,\s*\w+\s*,\s*\w+\s*,\s*\w+\s*=\s*(["'])(\w+)\1\s*[,)]/)?.[2];
-db.catch(()=>{});
-nbox.onchange=()=>{let n=nbox.value;if(n==sname)cbox.value=ssrc;else store("readonly",s=>s.get(n)).then(c=>{if(c!=null)cbox.value=c}).catch(()=>{})};
-hand.onclick=()=>{enable();show(hscreen);handshake(hscreen).then(r=>connected(r.link,r.side)).catch(e=>{alert("Handshake error: "+e.message);show(intro);enable(hand)})}
-play.onclick=()=>{let src=cbox.value;load(src,(g,err)=>{if(!g)return alert("Failed to load game code: "+err.message);link.send({sys:"load",code:src});save(src,g.fn);let e=start(g);if(e){goback(true);alert("Error running game: "+e.message)}})}
-back.onclick=()=>goback(true)
-enable(hand)
-function onsys(m){
-  if(m.sys=="load"){if(running||typeof m.code!="string")return;cbox.value=m.code;load(m.code,(g,err)=>{let e=err||start(g);if(e){link.send({sys:"error",msg:e.message});g&&goback(false);alert("Received game failed: "+e.message)}})}
-  else if(m.sys=="back"){running&&goback(false)}
-  else if(m.sys=="error"&&running){goback(false);alert("The other phone couldn't run the game: "+m.msg)}
-}
-function load(src,cb){
-  running=1;show(gbox);enable(back);gbox.innerHTML="";
-  let ifr=element("iframe",gbox);
-  ifr.onload=()=>{
-    if(!ifr.isConnected)return;
-    let win=ifr.contentWindow,fn;
-    try{fn=parsegame(src,win)}catch(e){goback(false);return cb(null,e)}
-    cb({fn,ifr})
-  };
-  ifr.srcdoc=FRAME
-}
-function start({fn,ifr}){link.reset();try{let r=fn(link,side,{w:ifr.clientWidth,h:ifr.clientHeight});cleanup=r}catch(e){return e}}
-function goback(notify){notify&&link.send({sys:"back"});try{cleanup?.()}catch{}cleanup=0;running=0;link.reset();gbox.innerHTML="";show(cscreen);enable(play)}
-function connected(l,s){link=l;side=s;link.sys=onsys;if(typeof game=="function"){sname=gname(game)||"";ssrc=game.toString()}cbox.value=ssrc;refresh();show(cscreen);enable(play)}
-function save(src,fn){let name=gname(fn);if(!name)return;if(name==sname){if(src!=ssrc)alert("sample can't be changed");return}store("readwrite",s=>s.put(src,name)).then(()=>refresh(name)).catch(()=>{})}
-function refresh(pick){return store("readonly",s=>s.getAllKeys()).catch(()=>[]).then(keys=>{let names=[...(sname?[sname]:[]),...keys.sort()];nbox.innerHTML="";names.forEach(n=>element("option",nbox,{textContent:n,value:n}));nbox.value=pick||sname||names[0]||""})}
-function hold(el,callback,timer){el.onpointerdown=_=>timer=setTimeout(callback,500);el.onpointerup=el.onpointercancel=_=>clearTimeout(timer)}hold(hand,()=>hand.disabled||connected({send(){},on(){},ready(f){f()},reset(){}},"a"));hand.oncontextmenu=()=>false
-function parsegame(src,W=window){if(/\b(function|const|let|var)\s+game\b/.test(src))try{let fn=new W.Function("link","side","area",src+"\nreturn typeof game=='function'?game:null")();if(fn)return fn}catch{}return new W.Function("link","side","area",src)}
+function datamatrix(strippedsdp){let d=[],i,j,f,r=Array(48).fill(0),x=1,e=[],L=[],g=[1],N=36,P=20,o=35,C,a=[],p=0,y=4,z=0,G=[],u,v,
+M=(a,b)=>a&&b?e[(L[a]+L[b])%255]:0,h=(y,x,q,b)=>(y<0&&(y+=N,x+=4),x<0&&(x+=N,y+=4),a[y*N+x]=C[q]>>7-b&1),s=(m,q)=>m.map(([y,x],b)=>h(y,x,q,b)),U=(y,x,q)=>[[2,2],[2,1],[1,2],[1,1],[1,0],[0,2],[0,1],[0,0]].map(([c,b],i)=>h(y-c,x-b,q,i));
+strippedsdp.replace(/\d\d|./g,m=>d.push(m[1]?130+ +m:m.charCodeAt()+1));for(d.length<114&&d.push(129);d.length<114;)d.push((129+149*(d.length+1)%253)%254+1);
+for(i=0;i<255;i++)e[i]=x,L[x]=i,x=x*2^(x>127)*301;for(i=1;i<=48;g=f,i++)for(f=[...g,0],j=0;j<g.length;j++)f[j+1]^=M(g[j],e[i]);d.map(v=>{f=v^r.shift();for(j=0;j<48;)r[j]^=M(f,g[++j])});C=[...d,...r];
+do{
+  y==N&!z&&s([[o,0],[o,1],[o,2],[0,34],[0,o],[1,o],[2,o],[3,o]],p++);
+  do{y<N&&z>=0&&a[y*N+z]==null&&U(y,z,p++);y-=2;z+=2}while(y>=0&&z<N);y++;z+=3;
+  do{y>=0&&z<N&&a[y*N+z]==null&&U(y,z,p++);y+=2;z-=2}while(y<N&&z>=0);y+=3;z++;
+}while(y<N||z<N);
+for(y=0;y<40;y++)for(G[y]=[],x=0;x<40;x++)u=x%P,v=y%P,G[y][x]=!u|v==19?1:!v?1-u%2:u==19?v%2:a[((y/P|0)*18+v-1)*N+(x/P|0)*18+u-1];
+return[G,40]
 }
 
-function handshake(container){return new Promise((resolve,reject)=>{
-let peer,chan,stream,last="",dm,answering=0,
-  box=element("div",container,{style:"position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;gap:8px;padding:8px;box-sizing:border-box;overflow:hidden"}),
-  ctx=element("canvas",box,{style:"max-width:85vw;max-height:35vh;object-fit:contain"}).getContext("2d"),
-  vid=element("video",box,{hidden:true,muted:true}),
-  ovl=element("div",box,{textContent:"SCAN OK!",style:"position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:20px sans-serif;background:rgba(0,128,0,.8);opacity:0;transition:opacity .3s;pointer-events:none"}),
-  note=element("div",box,{textContent:"Point your camera at the barcode on the other phone",style:"color:#0f0;font-size:13px"});
-navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(startcamera).catch(e=>{stop();reject(Error("Camera or scanner error: "+e.message))})
-async function startcamera(s){
-  stream=vid.srcObject=s;await vid.play();
-  let det=new BarcodeDetector({formats:["data_matrix"]});
-  async function loop(){
-    if(!stream)return;
-    ({videoWidth:ctx.canvas.width,videoHeight:ctx.canvas.height}=vid);
-    ctx.drawImage(vid,0,0,ctx.canvas.width,ctx.canvas.height);
-    try{let[hit]=await det.detect(ctx.canvas);hit&&scanned(hit.rawValue)}catch{}
-    requestAnimationFrame(loop)
-  }
-  offer();loop()
-}
-async function scanned(s){
-  if(s==last||s.length<20)return;last=s;let k=s[0];if(answering||!"oa".includes(k))return;
+function handshake(c){return new Promise((ok,no)=>{
+let p,ch,st,last,dm,ans,
+b=E("div",c,{style:"position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;gap:8px;padding:8px;box-sizing:border-box"}),
+v=E("video",b,{muted:1,style:"max-width:85vw;max-height:35vh"}),
+o=E("div",b,{textContent:"Scan other phone",style:"color:#0f0;font-size:13px"}),
+strip=d=>{let g=k=>d.match(RegExp("^a="+k+"(.+)","m"))?.[1],ca=(d.match(/^a=candidate:.+$/gm)||[]).map(l=>l.split(" ")).filter(c=>/udp/i.test(c[2])),q=ca.find(c=>!c[4].includes(":"))||ca[0],
+  f=[/^a=setup:active/m.test(d)?"a":"o",g("ice-ufrag:"),g("ice-pwd:"),btoa(String.fromCharCode(...((g("fingerprint:sha-256 ")||"").replace(/:/g,"").match(/../g)||[]).map(x=>parseInt(x,16)))).replace(/=/g,""),q?.[4],q?.[5]];
+  if(f.some(x=>!x))throw Error("SDP missing a field");return f.join("|")},
+unstrip=(s,[t,u,w,f,ip,pt]=s.split("|"))=>`v=0\no=- 1 2 IN IP4 0.0.0.0\ns=-\nt=0 0\nm=application 9 UDP/DTLS/SCTP webrtc-datachannel\na=ice-ufrag:${u}\na=ice-pwd:${w}\n`+
+  `a=fingerprint:sha-256 ${[...atob(f)].map(c=>(256+c.charCodeAt()).toString(16).slice(1)).join`:`.toUpperCase()}\na=setup:${t=="o"?"actpass":"active"}\na=candidate:1 1 udp 2113937151 ${ip} ${pt} typ host\na=end-of-candidates\n`,
+gather=async(q,d)=>{let w=new Promise(f=>{q.onicecandidate=e=>e.candidate||f();setTimeout(f,4000)});await q.setLocalDescription(d);await w;return strip(q.localDescription.sdp)},
+bc=t=>{
+  dm?.remove();let[g,z]=datamatrix(t),m=z+4,k=(Math.min(innerWidth*.6,innerHeight*.25)/m|0)||1,W=k*m,x=E("canvas",null,{width:W,height:W,style:"max-height:25vh;object-fit:contain"}).getContext("2d");
+  x.fillStyle="#fff";x.fillRect(0,0,W,W);x.fillStyle="#000";g.map((r,j)=>r.map((y,i)=>y&&x.fillRect((i+2)*k,(j+2)*k,k,k)));b.prepend(dm=x.canvas)},
+mk=q=>{
+  let m=0,t=0,s,go=()=>m&&t&&(m=t=0,s()),
+  l={send(o){try{q.send(JSON.stringify(o))}catch{}},sys(){},on(){},ready(f){m=1;s=f;l.send({sys:"rdy"});go()},reset(){m=t=0;s=0;l.on=()=>{};l.onclose=null}};
+  q.onmessage=({data})=>{let x;try{x=JSON.parse(data)}catch{return}x&&typeof x=="object"&&(x.sys=="rdy"?(t=1,go()):x.sys?l.sys(x):l.on(x))};
+  q.onclose=()=>l.onclose?.();return l},
+stop=()=>{st?.getTracks().forEach(t=>t.stop());st=0;b.remove()},
+launch=s=>{stop();ok({link:mk(ch),side:s})},
+offer=async()=>{p=new RTCPeerConnection;ch=p.createDataChannel("x");ch.onopen=()=>launch("a");bc(await gather(p,await p.createOffer()))},
+scanned=async s=>{
+  if(s==last||s.length<20)return;last=s;let k=s[0];if(ans||!"oa".includes(k))return;
   try{
-    if(k=="o"){
-      answering=1;ctx.canvas.style.display="none";
-      peer=new RTCPeerConnection;
-      peer.ondatachannel=e=>{chan=e.channel;chan.onopen=()=>launch("b")};
-      await peer.setRemoteDescription({type:"offer",sdp:sdpunstrip(s)});
-      showbarcode(await gather(peer,await peer.createAnswer()));
-      note.textContent="Now hold this barcode up to the other phone"
-    }else await peer.setRemoteDescription({type:"answer",sdp:sdpunstrip(s)});
-    ovl.style.opacity=1;setTimeout(()=>ovl.style.opacity=0,1000)
-  }catch(e){note.textContent=e.message}
-}
-function showbarcode(text){
-  dm?.remove();
-  let[grid,n]=datamatrix(text),m=n+4,cell=Math.floor(Math.min(innerWidth*.6,innerHeight*.25)/m)||1,W=cell*m,c=element("canvas",null,{width:W,height:W,style:"max-height:25vh;object-fit:contain"}).getContext("2d");
-  c.fillStyle="#fff";c.fillRect(0,0,W,W);c.fillStyle="#000";grid.forEach((row,j)=>row.forEach((v,i)=>v&&c.fillRect((i+2)*cell,(j+2)*cell,cell,cell)));
-  box.prepend(dm=c.canvas)
-}
-function makelink(chan){
-  let me=0,them=0,start,go=()=>me&&them&&(me=them=0,start()),
-  link={
-    send(o){try{chan.send(JSON.stringify(o))}catch{}},
-    sys(){},on(){},
-    ready(fn){me=1;start=fn;link.send({sys:"rdy"});go()},
-    reset(){me=them=0;start=null;link.on=()=>{};link.onclose=null}
-  };
-  chan.onmessage=({data})=>{let m;try{m=JSON.parse(data)}catch{return}if(!m||typeof m!="object")return;m.sys=="rdy"?(them=1,go()):m.sys?link.sys(m):link.on(m)}
-  chan.onclose=()=>link.onclose?.();
-  return link
-}
-function sdpstrip(sdp){
-  function H2B(hex){return btoa(String.fromCharCode(...(hex.match(/../g)||[]).map(x=>parseInt(x,16)))).replace(/=/g,"")}
-  let g=k=>sdp.match(RegExp("^a="+k+"(.+)","m"))?.[1],
-    cands=(sdp.match(/^a=candidate:.+$/gm)||[]).map(l=>l.split(" ")).filter(c=>/udp/i.test(c[2])),
-    c=cands.find(c=>!c[4].includes(":"))||cands[0],
-    f=[/^a=setup:active/m.test(sdp)?"a":"o",g("ice-ufrag:"),g("ice-pwd:"),H2B((g("fingerprint:sha-256 ")||"").replace(/:/g,"")),c?.[4],c?.[5]];
-  if(f.some(v=>!v))throw Error("SDP missing a field");
-  return f.join("|")
-}
-function sdpunstrip(s,[type,ufrag,pwd,fp,ip,port]=s.split("|")){
-  function B2H(b64){return [...atob(b64)].map(c=>(256+c.charCodeAt()).toString(16).slice(1)).join(":").toUpperCase()}
-  return["v=0","o=- 1 2 IN IP4 0.0.0.0","s=-","t=0 0","m=application 9 UDP/DTLS/SCTP webrtc-datachannel","a=ice-ufrag:"+ufrag,"a=ice-pwd:"+pwd,"a=fingerprint:sha-256 "+B2H(fp),"a=setup:"+(type=="o"?"actpass":"active"),"a=candidate:1 1 udp 2113937151 "+ip+" "+port+" typ host","a=end-of-candidates",""].join("\r\n")
-}
-function launch(side){stop();resolve({link:makelink(chan),side})}
-function stop(){stream?.getTracks().forEach(t=>t.stop());stream=0;box.remove()}
-async function offer(){peer=new RTCPeerConnection;chan=peer.createDataChannel("x");chan.onopen=()=>launch("a");showbarcode(await gather(peer,await peer.createOffer()))}
-async function gather(pc,desc){let done=new Promise(r=>{pc.onicecandidate=e=>e.candidate||r();setTimeout(r,4000)});await pc.setLocalDescription(desc);await done;return sdpstrip(pc.localDescription.sdp)}
-})}
-
-</script></body>
+  if(k=="o"){ans=1;v.hidden=1;p=new RTCPeerConnection;p.ondatachannel=e=>{ch=e.channel;ch.onopen=()=>launch("b")};await p.setRemoteDescription({type:"offer",sdp:unstrip(s)});bc(await gather(p,await p.createAnswer()));o.textContent="Scan this"}
+  else await p.setRemoteDescription({type:"answer",sdp:unstrip(s)})
+  }catch(e){o.textContent=e.message}};
+navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"}}).then(async s=>{
+  st=v.srcObject=s;await v.play();let d=new BarcodeDetector({formats:["data_matrix"]});offer();
+  (async function l(){if(!st)return;try{let[h]=await d.detect(v);h&&scanned(h.rawValue)}catch{}requestAnimationFrame(l)})()
+}).catch(e=>{stop();no(Error("Camera or scanner error: "+e.message))})
+})}})()</script>
