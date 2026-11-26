@@ -252,7 +252,7 @@ Each of these adds lines, and the 3x5 card is part of the point, so they are opt
 ## FAQ
 
 **Is this really serverless?**
-For the connection, yes. Somebody has to serve the page once. After it loads, no server takes part.
+For the connection, yes. Somebody has to serve the page once, over https. After it loads, no server takes part.
 
 **Doesn't the barcode expose my IP address?**
 It contains your private LAN address, shown to the person you chose to scan it. The address only means something on your hotspot, and it is not a secret. The fingerprint is what protects the connection.
@@ -267,7 +267,7 @@ The offerer learns it from the answerer's first ICE check.
 Chrome refuses to parse the SDP without them. I tried.
 
 **Why is it hotspot and not Wi-Fi?**
-A hotspot is the setup I tested.
+A hotspot is the setup I tested, and I don't want to deal with people giving me scary coffee shop wifi scenarios.
 
 **Can I play over the internet?**
 No. That needs STUN, and probably TURN, which are servers.
