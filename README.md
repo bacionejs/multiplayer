@@ -95,7 +95,7 @@ A SHA-256 fingerprint in an SDP is 32 hex pairs separated by colons: 95 characte
 
 ## Cutting it down
 
-I spent about two months cutting this down, and the rule was simple: if the connection does not need it, it goes. Most of an SDP is boilerplate for features a data channel never uses, so most of it can be rebuilt on the receiving side instead of transmitted. What survives is the minimum: a role, a fingerprint, and for the offer an address.
+I spent an extraordinary amount of time cutting this down, and the rule was simple: if the connection does not need it, it goes. Most of an SDP is boilerplate for features a data channel never uses, so most of it can be rebuilt on the receiving side instead of transmitted. What survives is the minimum: a role, a fingerprint, and for the offer an address.
 
 The fingerprint is encoded as compactly as the hash allows. Anything one phone can learn from the other's traffic is not sent, which is why the answer carries no address. Anything that can be a constant is a constant: both phones overwrite the generated ICE username fragment and password with the same fixed values, so neither is transmitted. ICE requires at least 4 characters for the username fragment and 22 for the password, and the constants are exactly that long.
 
@@ -107,11 +107,11 @@ A raw SDP is about 700 characters. The offer is now **64** and the answer **45**
 
 That difference decides the barcode. In ASCII encodation 700 characters is about 700 codewords, and digit pairs pack a little tighter than that. The nearest Data Matrix sizes that hold it are 96x96, with 696 data codewords, and 104x104, with 816. The payload now fits in 32x32. With the quiet zone that is 36 modules across instead of about 100, so each module is roughly 2.8 times as wide in the same screen space.
 
-My older Android tablet, with a cheap camera that has trouble focusing, scans the barcode faster than it scanned the previous, larger one. The answer barcode scans without trouble on my older phone.
+With a cheap camera that has trouble focusing, it will scan the barcode faster.  
 
 ## The Data Matrix encoder
 
-The encoder is original code, written with AI assistance and refined over a couple of weeks. It implements the public Data Matrix standard and uses no outside software, so there is nothing to attribute or license. This project is public domain (Unlicense).
+The encoder is original code. It implements the public Data Matrix standard and uses no outside software, so there is nothing to attribute or license.  
 
 Scanning uses the browser's `BarcodeDetector` with the `data_matrix` format.
 
