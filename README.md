@@ -1,7 +1,7 @@
 <img width="100%" alt="2 phones playing game" src="https://github.com/user-attachments/assets/7e0cf2a3-02ba-4eee-b936-75754d2e3f57" />
 
 
-Serverless multiplayer via webrtc/camera/barcode (**no** signal/stun/turn servers).  
+**Serverless multiplayer via webrtc/camera/barcode (*no* signal/stun/turn servers)**  
 
 This project is mainly about the serverless technique used and the sample game merely provides an end-to-end explanation.  
 
