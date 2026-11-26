@@ -32,269 +32,79 @@ It is not a library, not a product, and not a proposal for how multiplayer games
 <details>
 <summary>The long version: how it works, what I tried, security</summary>
 
-## The problem
+## How the Connection Works
 
-Two WebRTC peers cannot connect until they have exchanged a blob of text called an SDP. Exchanging it is called signaling, and signaling normally needs a server, because the peers cannot talk yet. STUN and TURN servers are the other usual helpers, for discovering public addresses and relaying traffic.
+Connecting two WebRTC peers normally requires a signaling server to exchange Session Description Protocol (SDP) text, plus STUN and TURN servers to discover public addresses and relay traffic. On a shared hotspot, two devices can reach each other directly over their local network (LAN), eliminating the need for STUN and TURN. Instead, this experiment uses two phones' screens and rear cameras as a visual signaling channel.
 
-On a hotspot, the two phones can reach each other directly by their LAN addresses, so STUN and TURN are not needed. That leaves signaling as the only server-shaped problem.
+A raw SDP is roughly 700 characters, most of which is unneeded boilerplate for a data channel. Stripping it down leaves only what is essential:
 
-## The idea: the camera is the signaling server
+* **Role:** Offer (`o`, using DTLS `actpass`) or answer (`a`, using DTLS `active`).
+* **Fingerprint:** The peer's SHA-256 DTLS certificate hash, converted from 32 colon-separated hex pairs (95 characters) into unpadded base64 (43 characters).
+* **Address (offer only):** The first non-IPv6 IPv4 host candidate's IP address (up to 15 characters) and UDP port (up to 5 characters).
 
-Two people in the same room already have a channel between their phones: one screen and one camera. Each phone shows a Data Matrix barcode. The other phone scans it.
+The answer omits an address because the answerer sends its first ICE check to the offerer's address, allowing the offerer to learn the answerer's address as a peer-reflexive candidate from that incoming check. Both sides also replace generated ICE username fragments and passwords with fixed constants (meeting ICE's minimum lengths of 4 and 22 characters) so they do not need to be transmitted, and `unstrip` rebuilds minimal SDP headers (`v=`, `o=`, `s=`, `t=`, `m=... webrtc-datachannel`, ICE credentials, fingerprint, DTLS role, and optional host candidate) because Chrome's SDP parser requires `o=`, `s=`, and `t=`.
 
-A raw SDP is about 700 characters. Almost all of it is boilerplate that a data channel never uses. What a peer actually needs to know is small:
+---
 
-1. **Who am I?** The DTLS certificate fingerprint.
-2. **Where am I?** An IP address and port (offer only).
-3. **What role am I playing?** Offer or answer.
+## Handshake and Barcode Encoding
 
-Everything else is rebuilt identically on the receiving side. The offer barcode carries **64 characters** and the answer barcode **45**, about 9% and 6% of the raw SDP.
+Because both phones start with an offer and scan with rear cameras, they cannot scan each other simultaneously; whichever scans first becomes the answerer.
 
-The barcode is also the authentication channel. The fingerprint travels over a line-of-sight connection between two people in the same room, and DTLS then verifies it. That is the security backbone of the whole design.
+1. **Create offer:** Each phone creates an `RTCPeerConnection` and data channel, generates an offer, replaces ICE username/password fields with fixed constants, and waits up to 4 seconds (or until gathering finishes) to collect host candidates.
+2. **Encode and display:** `strip` compresses the SDP into a pipe-delimited string—`o|<fingerprint>|<ip>|<port>` for an offer (up to ~64 characters) or `a|<fingerprint>` for an answer (up to ~45 characters)—and renders it as a Data Matrix barcode.
+3. **Scan and answer:** The first phone to scan a valid offer (`o`) expands it with `unstrip`, sets it as the remote description, creates an answer, encodes the answer as a barcode, and displays `"Scan this"`.
+4. **Complete connection:** The other phone scans the answer (`a`) and applies it as the remote description. Once ICE checks succeed and DTLS verifies the fingerprints, the data channel opens, the camera stops, and the app switches to `Play`.
 
-## The handshake
+### Minimal Data Matrix Encoder
 
-Both phones start by creating and displaying an offer. Each phone scans with its rear camera, so the two phones cannot scan each other at the same moment. Whichever phone scans first becomes the answerer.
+Data Matrix ECC 200 is used because it requires no mask-selection step and keeps the encoder, which is rather large, around 1 KB when only supporting ascii, while decoding via the browser's `BarcodeDetector` (`data_matrix` format):
 
-1. Each phone creates an `RTCPeerConnection`, a data channel, and an offer.
-2. Before applying it, the code overwrites the ICE username fragment and password with fixed constants.
-3. The phone waits for candidate gathering to finish, or 4 seconds, whichever comes first. With no STUN configured, only host candidates appear.
-4. The SDP is reduced to a short string and drawn as a Data Matrix barcode.
-5. The first phone to scan an offer expands it back into a minimal SDP, sets it as the remote description, creates an answer, and displays the answer as a barcode.
-6. The other phone scans the answer and applies it.
-7. ICE connectivity checks flow, DTLS verifies the fingerprints, and the data channel opens. The camera stops and the app moves to `Play`.
+* **ASCII encodation:** Digit pairs become one codeword (`130 + value`), and other characters become one codeword (`charCode + 1`).
+* **Padding:** Short payloads start with codeword `129` followed by standard pseudo-random pad bytes.
+* **Error correction:** Reed-Solomon over GF(256) with polynomial 301 builds error-correction codewords at runtime.
+* **Layout & drawing:** Codewords are placed via diagonal ("Utah") placement with one corner pattern and drawn into a 2x2 region grid (with L-borders and clock tracks) plus a 2-module quiet zone on a canvas.
 
-### The answer needs no address
+The app hard-codes a **32x32** symbol (62 data codewords, 36 error-correction codewords, 36 modules across including the quiet zone) instead of a 96x96 symbol needed for 700 characters. Fewer modules across the same screen space make each module larger (roughly 2.8x wider than a ~100-module symbol), improving camera readability under blur, glare, or shakiness. A private IPv4 address with a 5-digit port (such as `192.168.255.255`) takes 61 of 62 offer codewords.  
 
-The answerer already knows the offerer's address from the offer barcode, so it sends the first ICE check there. The offerer learns the answerer's address from the source of that incoming check. ICE calls this a peer-reflexive candidate. The address was never needed in the answer, so it was removed.
+---
 
-## The payload
+## Game Layer and Sample Game
 
-Offer:
+Once connected, the UI provides `Handshake`, `Play`, and `Back`. Games run inside an iframe (black background, white monospace font, no `sandbox` attribute). Tapping `Play` sends the game source over the data channel so the other phone loads and runs it automatically. Tapping `Back` sends a `sys: "back"` message, runs any returned cleanup function, tears down the iframe, and returns to the game screen.
 
-```
-o|<fingerprint>|<ip>|<port>
-```
+A game can be written as a function or raw function body receiving `(link, side, area)`:
 
-Answer:
+* `link.send(obj)` sends a JSON object to the peer (avoiding the reserved `sys` property).
+* `link.on` handles incoming messages from the peer.
+* `link.ready(fn)` runs `fn` on both devices once both call `ready`.
+* `link.onclose` runs if the connection closes.
+* `side` is `"a"` or `"b"`, and `area` is `{w, h}`.
+* A fourth parameter `name="mygame"` on a `game` function saves the code under that name in `localStorage` (without overwriting the sample).
 
-```
-a|<fingerprint>
-```
+The included sample game is a two-player light-cycles game running a deterministic simulation with 160 ms ticks and a two-tick input delay (sending input for tick `T+2` and advancing tick `T` once both inputs arrive).
 
-| Field | Meaning | Size |
-|---|---|---|
-| Role | `o` for offer (DTLS `actpass`), `a` for answer (DTLS `active`) | 1 char |
-| Fingerprint | SHA-256 certificate hash, base64, padding stripped | 43 chars |
-| IP | First IPv4 host candidate | up to 15 chars |
-| Port | Host candidate UDP port | up to 5 chars |
+---
 
-A SHA-256 fingerprint in an SDP is 32 hex pairs separated by colons: 95 characters. Decoding it to bytes and re-encoding as unpadded base64 gives 43. That is the biggest single saving. The fingerprint cannot shrink further without truncating the hash, so 43 is the floor.
+## Security, Scope, and Limitations
 
-`unstrip` rebuilds a minimal SDP from the string: the `v=`, `o=`, `s=` and `t=` lines, one `m=application ... webrtc-datachannel` line, the ICE credentials, the fingerprint, the DTLS role, and a host candidate if an IP and port were sent.
+* **Transport & identity:** Data channel traffic is DTLS-encrypted, certificates are freshly generated per session, and peers verify the DTLS certificate fingerprint against the scanned barcode. Fixed ICE credentials are public in the code and only help identify connectivity checks.
+* **Network & IP exposure:** After initial HTTPS page load, the app makes no further network requests. Barcodes contain a private LAN IPv4 address (and port) rather than a secret; Android Chrome provides plain IPv4 host candidates rather than desktop `.local` mDNS names, and camera permission also permits IP access per spec.
+  * *Example:* While you and your partner play on your own hotspot, a passerby catches a glimpse of your barcode and snaps a picture of it. In reality, that stolen data is practically useless: the private LAN address and port only apply to your own hotspot, WebRTC uses a fresh certificate fingerprint for each session so a captured one becomes stale as soon as the connection closes, and an outsider cannot hijack or join the session without being on your private network, matching the active DTLS fingerprint, and getting you to scan their own barcode.
+* **Code execution risk:** Incoming game code runs without confirmation or iframe sandboxing, relying on physical trust between the two people.
+* **Boundaries:** Designed strictly as an experiment for two players on Android Chrome over a local hotspot, no internet play (no STUN/TURN), no multi-player beyond two peers, and not a library or product. Potential improvements beyond an experiment include prompting before running received code, sandboxing the iframe, adding an encoder length check, showing a fingerprint verification code and encoding IP/port as 6 binary bytes.
 
+---
 
-- `gather` waits for candidate gathering to finish (or 4 seconds), substitutes the fixed ICE credentials, and returns the compressed string.
-- `strip` extracts the role, the fingerprint (hex to bytes to unpadded base64), and for the offer the first non-IPv6 host candidate's IP and port. It throws if a required field is missing.
-- `unstrip` rebuilds the SDP. `2113937151` is the standard ICE priority for a host UDP candidate: (2^24 × 126) + (2^8 × 65535) + (256 − 1). The `(256+c.charCodeAt()).toString(16).slice(1)` trick pads each byte to two hex digits.
-
-## Cutting it down
-
-I spent an extraordinary amount of time cutting this down, and the rule was simple: if the connection does not need it, it goes. Most of an SDP is boilerplate for features a data channel never uses, so most of it can be rebuilt on the receiving side instead of transmitted. What survives is the minimum: a role, a fingerprint, and for the offer an address.
-
-The fingerprint is encoded as compactly as the hash allows. Anything one phone can learn from the other's traffic is not sent, which is why the answer carries no address. Anything that can be a constant is a constant: both phones overwrite the generated ICE username fragment and password with the same fixed values, so neither is transmitted. ICE requires at least 4 characters for the username fragment and 22 for the password, and the constants are exactly that long.
-
-The floor is set by Chrome's SDP parser. It refuses to parse the SDP without the `o=`, `s=` and `t=` lines, even though they carry no information here, so they stay as constants.
-
-## Results
-
-A raw SDP is about 700 characters. The offer is now **64** and the answer **45**.
-
-That difference decides the barcode. In ASCII encodation 700 characters is about 700 codewords, and digit pairs pack a little tighter than that. The nearest Data Matrix sizes that hold it are 96x96, with 696 data codewords, and 104x104, with 816. The payload now fits in 32x32. With the quiet zone that is 36 modules across instead of about 100, so each module is roughly 2.8 times as wide in the same screen space.
-
-With a cheap camera that has trouble focusing, it will scan the barcode faster.  
-
-## The Data Matrix encoder
-
-A full encoder is rather large, whereas this minimal implementation, supporting ascii, is only 1k.
-
-Scanning uses the browser's `BarcodeDetector` with the `data_matrix` format.
-
-I used Data Matrix ECC 200 because the encoder stays small. It has no mask-selection step, and for a known payload range I can hard-code one symbol size.
-
-How it works:
-
-1. **Encodation.** ASCII mode. Each pair of digits becomes one codeword (`130 + value`) and every other character becomes one codeword (`character code + 1`). That is why the numeric IP and port pack well.
-2. **Padding.** If the data is shorter than the capacity, the first pad is codeword `129`, followed by the standard's pseudo-random pad values.
-3. **Error correction.** Reed-Solomon over GF(256) with field polynomial 301. The generator polynomial is built at runtime.
-4. **Placement.** The standard diagonal ("Utah") placement algorithm, with one corner pattern.
-5. **Finder pattern.** Solid L-shaped borders and alternating clock tracks, in a 2x2 grid of regions.
-6. **Drawing.** The grid is drawn to a canvas with a 2-module quiet zone on every side.
-
-### Symbol size
-
-| | 32x32 (used) | 96x96 (what 700 characters needs) |
-|---|---|---|
-| Data codewords | 62 | 696 |
-| Error-correction codewords | 36 | 272 |
-| Modules across, with quiet zone | 36 | 100 |
-
-Choosing the symbol size is a handful of constants in the encoder: the size, the codeword counts, and the region offsets. The Reed-Solomon routine, placement loop and finder-pattern drawing do not change. 36x36 is not an option with this code, because it needs a corner-placement case the encoder does not have.
-
-Fewer modules in the same screen space means each module is bigger. Bigger modules survive blur, glare and shaky hands better, which is what fails when a camera scans a screen.
-
-### Capacity
-
-The offer costs: role (1) + three separators + fingerprint (43) + IP + port. A digit pair is one codeword.
-
-| Case | Offer codewords |
-|---|---|
-| Worst private address, `192.168.255.255`, with a 5-digit port | 61 of 62 |
-| A public address such as `255.255.255.255`, with a 5-digit port | 65 |
-
-Private-range addresses always fit. The encoder has no length check, so a payload over 62 codewords would not fit the symbol. The answer is 45 characters or fewer and always fits.
-
-To see the payload size on a phone with no console, put one line in the barcode-drawing function:
-
-```js
-alert(t.length+" chars, "+t.match(/\d\d|./g).length+"/62 codewords\n"+t);
-```
-
-## mDNS and the IP address in the barcode
-
-mDNS is multicast DNS, a way to resolve names on a local network without a DNS server. It is a convenience, not a security mechanism. Desktop Chrome can replace the IP in a host candidate with a random `.local` name resolved that way. Android Chrome does not use mDNS, so the SDP contains a plain IPv4 address, which is exactly what the barcode needs.
-
-Per the spec, a page that has camera permission gets the real IP anyway, and this project asks for the camera. None of it matters here. The barcode shows a private LAN address to the one person scanning it, and a private IP is not a secret. What protects the connection is the DTLS fingerprint.
-
-## Game layer
-
-The game layer is a convenience on top of the handshake. I added it because a single hard-coded game was too limiting: anyone who wanted to experiment even a little would have to host their own copy on a GitHub page. Now you paste a game into the app and play.
-
-The app has three buttons: `Handshake`, `Play` and `Back`. A game is a function:
-
-```js
-function game(link, side, area, name="mygame") {
-  link.on = msg => { /* messages from the other phone */ };
-  link.onclose = () => { /* the other phone went away */ };
-  link.ready(() => { /* both phones start here */ });
-}
-```
-
-- `link.send(obj)` sends a JSON object to the other phone.
-- `link.on` receives objects from the other phone.
-- `link.ready(fn)` calls `fn` on both phones at the same moment, once both have asked.
-- `link.onclose` fires if the connection drops.
-- `side` is `"a"` or `"b"`, so each phone can play a different role.
-- `area` is `{w, h}`, the size of the play area.
-- `name` is a default string on the fourth parameter. The app reads it and saves the game under that name in `localStorage`. The sample's name cannot be overwritten.
-- A game may return a cleanup function, which is called on `Back`. The game runs in an iframe that is torn down when you leave, so one is rarely needed.
-- If the pasted text does not define a function called `game`, the whole text is run as the body of a function taking `(link, side, area)`.
-- A message with a `sys` property is reserved for the app. Game messages must not use that key.
-
-Games run in an iframe with a black background and a white monospace font. Inside the game, `document` is the iframe's document.
-
-When you tap `Play`, your game's source is sent over the data channel and the other phone loads and runs it. Nobody pastes it twice.
-
-### The sample game
-
-The sample is a two-player light-cycles game. It uses lockstep networking with an input delay. Each phone sends its direction for tick `T+2`, and advances tick `T` only when both phones' inputs for it have arrived. Both phones run the same deterministic simulation, and only inputs cross the link, never game state. Ticks are 160 ms.
-
-## Security
-
-The threat model is two people in the same room, on a hotspot, playing a family game.
-
-**What protects the connection.** The data channel is DTLS encrypted. Each phone checks that the certificate it sees in the DTLS handshake matches the fingerprint it read from the barcode. WebRTC generates a fresh certificate for each connection by default, so the fingerprint changes every session and an old barcode is useless.
-
-| Someone on the hotspot... | Outcome |
-|---|---|
-| Sniffs the traffic | Sees only encrypted packets |
-| Tries to join the data channel | Fails fingerprint verification |
-| Photographs the barcode | Learns an ephemeral fingerprint, a LAN address and a port |
-| Holds up their own barcode for you to scan | This is the real attack. It needs physical presence and your cooperation |
-
-**Fixed ICE credentials.** The constants are public, since they are in this repository. They only help a phone recognize connectivity checks. The fingerprint, not the ICE credentials, authenticates the peer.
-
-**Received games run on your phone.** When the other player taps `Play`, their game's source arrives and the app loads it and runs it, with no confirmation. The iframe it runs in has no sandbox attribute. This is how the experiment works, and it fits the trust model: you only have a connection because you scanned a barcode held by someone in the same room. Pasting a game from the internet that you have not read is the usual risk of running code you did not write.
-
-**Network requests.** After the page loads, the app makes no network requests of its own.
-
-## Silly scenarios
-
-Each one has a realistic risk rating.
-
-**The Telephoto Bandit.** A suspicious figure across the park photographs your barcode with a long lens. They now know an ephemeral fingerprint, a LAN address that means nothing outside your hotspot, and a port that will be closed in ten minutes. *Realistic risk: none.*
-
-**The T-Shirt of Doom.** Someone wears a shirt printed with a barcode that is a valid offer, and a laptop in their backpack is listening at exactly that address, port and certificate. You scan their chest. The app becomes the answerer, connects, and runs the game they send. This takes a matching listener on your hotspot and your cooperation. *Realistic risk: slight, and mostly funny.*
-
-**The Photocopier.** You photocopy a barcode, tape it to the fridge, and try to scan it tomorrow. Each session uses a new certificate and a new port, and the phone that made it has closed the connection. The fridge is not listening. *Realistic risk: none.*
-
-**The Cat on the Back Button.** The cat walks across your screen mid-game and taps `Back`. `Back` is sent to the other phone too, so the game ends for both players. *Realistic risk: high likelihood, low severity.*
-
-**The Flip Phone.** Grandma wants to play. Her flip phone has no camera that can scan a Data Matrix. She reads the barcode aloud, five modules at a time. *Realistic risk: none, but the app does need a camera.*
-
-**The Evil Sibling.** Your sibling writes a game that flashes the screen, vibrates, and plays a sound at full volume at 3 a.m. It runs on your phone because you let it connect. *Realistic risk: that's what siblings are for.*
-
-## Out of scope
-
-This is an experiment to prove that serverless multiplayer is possible. These are its boundaries:
-
-- **LAN only.** There is no STUN or TURN, so there is no NAT traversal.
-- **Two players.** One offer and one answer.
-- **Android Chrome.** That is what the experiment runs on.
-- **Not a library.** It is a demonstration of a technique.
-
-## If this were more than an experiment
-
-1. **Confirm before running a received game.** A prompt before the loader accepts incoming source.
-2. **Sandbox the game iframe.** This would require changing how the loader creates the game function.
-3. **A length check in the encoder.** Fail loudly instead of overflowing the symbol.
-4. **A short verification code** derived from both fingerprints and shown on both screens, so players can confirm they match.
-5. **Binary IP and port.** 6 bytes instead of up to 20 characters.
-6. **A larger symbol size** if more fields are added. The encoder is missing the corner-placement case that 36x36 needs.
-
-## FAQ
-
-**Is this really serverless?**
-For the connection, yes. Somebody has to serve the page once, over https. After it loads, no server takes part.
-
-**Doesn't the barcode expose my IP address?**
-It contains your private LAN address, shown to the person you chose to scan it. The address only means something on your hotspot, and it is not a secret. The fingerprint is what protects the connection.
-
-**Why Data Matrix and not a QR code?**
-The encoder stays small, because Data Matrix has no mask-selection step and I hard-code one symbol size. The browser's scanner reads it.
-
-**Why does the answer carry no address?**
-The offerer learns it from the answerer's first ICE check.
-
-**Why are `o=`, `s=` and `t=` still there?**
-Chrome refuses to parse the SDP without them. I tried.
-
-**Why is it hotspot and not Wi-Fi?**
-A hotspot is the setup I tested, and I don't want to deal with people giving me scary coffee shop wifi scenarios.
-
-**Can I play over the internet?**
-No. That needs STUN, and probably TURN, which are servers.
-
-**Can I write my own game?**
-Yes. See the game layer above. The sample game is a complete working example.
-
-
-
-
-## Glossary
+## Quick Reference
 
 | Term | Meaning |
-|---|---|
-| SDP | Session Description Protocol, the text that describes a WebRTC connection |
-| Signaling | Exchanging SDPs so two peers can connect |
-| ICE | The procedure for finding a working network path between peers |
-| Host candidate | An ICE candidate that is just a local address and port |
-| Peer-reflexive candidate | A candidate learned from the source of an incoming ICE check |
-| STUN / TURN | Servers that discover public addresses / relay traffic. Not used here |
-| DTLS | The encryption layer under a WebRTC data channel |
-| Fingerprint | A hash of a certificate, used to authenticate the DTLS peer |
-| Codeword | One byte of data or error correction in a Data Matrix symbol |
-| Module | One square cell of a barcode |
-| Quiet zone | The blank margin around a barcode |
+| --- | --- |
+| **SDP / Signaling** | Session Description Protocol text describing a WebRTC connection, and the exchange of that data between peers. |
+| **ICE / Host / Peer-reflexive** | Path-discovery process; a host candidate is a local IP/port, while a peer-reflexive candidate is learned from an incoming check's source. |
+| **STUN / TURN** | Servers for discovering public addresses or relaying traffic (not used here). |
+| **DTLS / Fingerprint** | Encryption layer under the data channel, authenticated by matching the certificate hash against the scanned fingerprint. |
+| **Codeword / Module / Quiet zone** | Data or error-correction byte in Data Matrix; single barcode cell; blank border around the symbol. |
 
 </details>
+
+ 
