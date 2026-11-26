@@ -240,8 +240,6 @@ This is an experiment to prove that serverless multiplayer is possible. These ar
 
 ## If this were more than an experiment
 
-Each of these adds lines, and the 3x5 card is part of the point, so they are optional:
-
 1. **Confirm before running a received game.** A prompt before the loader accepts incoming source.
 2. **Sandbox the game iframe.** This would require changing how the loader creates the game function.
 3. **A length check in the encoder.** Fail loudly instead of overflowing the symbol.
