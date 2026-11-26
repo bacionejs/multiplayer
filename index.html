@@ -26,31 +26,29 @@ P.onclick=()=>{let s=X.value;load(s,(g,e)=>{if(!g)return alert("Failed to load g
 K.onclick=()=>goback(1);
 H.oncontextmenu=()=>(H.disabled||connected({send(){},on(){},ready(f){f()},reset(){}},"a"),!1);
 en(H);
-
-function datamatrix(strippedsdp){let d=[],i,j,f,r=Array(48).fill(0),x=1,e=[],L=[],g=[1],N=36,P=20,o=35,C,a=[],p=0,y=4,z=0,G=[],u,v,
+function datamatrix(strippedsdp){let d=[],i,j,f,r=Array(36).fill(0),x=1,e=[],L=[],g=[1],N=28,P=16,o=27,C,a=[],p=0,y=4,z=0,G=[],u,v,
 M=(a,b)=>a&&b?e[(L[a]+L[b])%255]:0,h=(y,x,q,b)=>(y<0&&(y+=N,x+=4),x<0&&(x+=N,y+=4),a[y*N+x]=C[q]>>7-b&1),s=(m,q)=>m.map(([y,x],b)=>h(y,x,q,b)),U=(y,x,q)=>[[2,2],[2,1],[1,2],[1,1],[1,0],[0,2],[0,1],[0,0]].map(([c,b],i)=>h(y-c,x-b,q,i));
-strippedsdp.replace(/\d\d|./g,m=>d.push(m[1]?130+ +m:m.charCodeAt()+1));for(d.length<114&&d.push(129);d.length<114;)d.push((129+149*(d.length+1)%253)%254+1);
-for(i=0;i<255;i++)e[i]=x,L[x]=i,x=x*2^(x>127)*301;for(i=1;i<=48;g=f,i++)for(f=[...g,0],j=0;j<g.length;j++)f[j+1]^=M(g[j],e[i]);d.map(v=>{f=v^r.shift();for(j=0;j<48;)r[j]^=M(f,g[++j])});C=[...d,...r];
+strippedsdp.replace(/\d\d|./g,m=>d.push(m[1]?130+ +m:m.charCodeAt()+1));for(d.length<62&&d.push(129);d.length<62;)d.push((129+149*(d.length+1)%253)%254+1);
+for(i=0;i<255;i++)e[i]=x,L[x]=i,x=x*2^(x>127)*301;for(i=1;i<=36;g=f,i++)for(f=[...g,0],j=0;j<g.length;j++)f[j+1]^=M(g[j],e[i]);d.map(v=>{f=v^r.shift();for(j=0;j<36;)r[j]^=M(f,g[++j])});C=[...d,...r];
 do{
-  y==N&!z&&s([[o,0],[o,1],[o,2],[0,34],[0,o],[1,o],[2,o],[3,o]],p++);
-  do{y<N&&z>=0&&a[y*N+z]==null&&U(y,z,p++);y-=2;z+=2}while(y>=0&&z<N);y++;z+=3;
+  y==N&!z&&s([[o,0],[o,1],[o,2],[0,26],[0,o],[1,o],[2,o],[3,o]],p++);
+  do{y<N&&z>=0&&a[y*N+z]==null&&U(y,z,p++);y-=2;z+=2}while(y>=0&&z<N);z+=3;y++;
   do{y>=0&&z<N&&a[y*N+z]==null&&U(y,z,p++);y+=2;z-=2}while(y<N&&z>=0);y+=3;z++;
 }while(y<N||z<N);
-for(y=0;y<40;y++)for(G[y]=[],x=0;x<40;x++)u=x%P,v=y%P,G[y][x]=!u|v==19?1:!v?1-u%2:u==19?v%2:a[((y/P|0)*18+v-1)*N+(x/P|0)*18+u-1];
-return[G,40]
+for(y=0;y<32;y++)for(G[y]=[],x=0;x<32;x++)u=x%P,v=y%P,G[y][x]=!u|v==15?1:!v?1-u%2:u==15?v%2:a[((y/P|0)*14+v-1)*N+(x/P|0)*14+u-1];
+return[G,32]
 }
-
 function handshake(c){return new Promise((ok,no)=>{
 let p,ch,st,last,dm,ans,
 b=E("div",c,{style:"position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;gap:8px;padding:8px;box-sizing:border-box"}),
 v=E("video",b,{muted:1,style:"max-width:85vw;max-height:35vh"}),
 o=E("div",b,{textContent:"Scan other phone",style:"color:#0f0;font-size:13px"}),
-strip=d=>{let g=k=>d.match(RegExp("^a="+k+"(.+)","m"))?.[1],ca=(d.match(/^a=candidate:.+$/gm)||[]).map(l=>l.split(" ")).filter(c=>/udp/i.test(c[2])),q=ca.find(c=>!c[4].includes(":"))||ca[0],
-  f=[/^a=setup:active/m.test(d)?"a":"o",g("ice-ufrag:"),g("ice-pwd:"),btoa(String.fromCharCode(...((g("fingerprint:sha-256 ")||"").replace(/:/g,"").match(/../g)||[]).map(x=>parseInt(x,16)))).replace(/=/g,""),q?.[4],q?.[5]];
+gather=async(q,d)=>{let w=new Promise(f=>{q.onicecandidate=e=>e.candidate||f();setTimeout(f,4000)});await q.setLocalDescription({type:d.type,sdp:d.sdp.replace(/(ufrag:).+/,"$1abcd").replace(/(pwd:).+/,"$1abcdefghijklmnopqrstuv")});await w;return strip(q.localDescription.sdp)},
+strip=d=>{let g=k=>d.match(RegExp("^a="+k+"(.+)","m"))?.[1],q=(d.match(/^a=candidate:.+$/gm)||[]).map(l=>l.split(" ")).find(c=>!c[4].includes(":")),a=/^a=setup:active/m.test(d),
+  f=[a?"a":"o",btoa(String.fromCharCode(...((g("fingerprint:sha-256 ")||"").replace(/:/g,"").match(/../g)||[]).map(x=>parseInt(x,16)))).replace(/=/g,""),...a?[]:[q?.[4],q?.[5]]];
   if(f.some(x=>!x))throw Error("SDP missing a field");return f.join("|")},
-unstrip=(s,[t,u,w,f,ip,pt]=s.split("|"))=>`v=0\no=- 1 2 IN IP4 0.0.0.0\ns=-\nt=0 0\nm=application 9 UDP/DTLS/SCTP webrtc-datachannel\na=ice-ufrag:${u}\na=ice-pwd:${w}\n`+
-  `a=fingerprint:sha-256 ${[...atob(f)].map(c=>(256+c.charCodeAt()).toString(16).slice(1)).join`:`.toUpperCase()}\na=setup:${t=="o"?"actpass":"active"}\na=candidate:1 1 udp 2113937151 ${ip} ${pt} typ host\na=end-of-candidates\n`,
-gather=async(q,d)=>{let w=new Promise(f=>{q.onicecandidate=e=>e.candidate||f();setTimeout(f,4000)});await q.setLocalDescription(d);await w;return strip(q.localDescription.sdp)},
+unstrip=(s,[t,f,ip,pt]=s.split("|"))=>`v=0\no=- 1 2 IN IP4 0.0.0.0\ns=-\nt=0 0\nm=application 9 UDP/DTLS/SCTP webrtc-datachannel\na=ice-ufrag:abcd\na=ice-pwd:abcdefghijklmnopqrstuv\n`+
+  `a=fingerprint:sha-256 ${[...atob(f)].map(c=>(256+c.charCodeAt()).toString(16).slice(1)).join`:`}\na=setup:${t=="o"?"actpass":"active"}\n${ip?`a=candidate:1 1 udp 2113937151 ${ip} ${pt} typ host\n`:""}`,
 bc=t=>{
   dm?.remove();let[g,z]=datamatrix(t),m=z+4,k=(Math.min(innerWidth*.6,innerHeight*.25)/m|0)||1,W=k*m,x=E("canvas",null,{width:W,height:W,style:"max-height:25vh;object-fit:contain"}).getContext("2d");
   x.fillStyle="#fff";x.fillRect(0,0,W,W);x.fillStyle="#000";g.map((r,j)=>r.map((y,i)=>y&&x.fillRect((i+2)*k,(j+2)*k,k,k)));b.prepend(dm=x.canvas)},
