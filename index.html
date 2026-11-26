@@ -45,7 +45,7 @@ v=E("video",b,{muted:1,style:"max-width:85vw;max-height:35vh"}),
 o=E("div",b,{textContent:"Scan other phone",style:"color:#0f0;font-size:13px"}),
 gather=async(q,d)=>{let w=new Promise(f=>{q.onicecandidate=e=>e.candidate||f();setTimeout(f,4000)});
   await q.setLocalDescription({type:d.type,sdp:d.sdp.replace(/(ufrag:).+/,"$1abcd").replace(/(pwd:).+/,"$1abcdefghijklmnopqrstuv")});await w;return strip(q.localDescription.sdp)},
-strip=d=>{let g=k=>d.match(RegExp("^a="+k+"(.+)","m"))?.[1],q=(d.match(/^a=candidate:.+$/gm)||[]).map(l=>l.split(" ")).find(c=>!c[4].includes(":")),a=/^a=setup:active/m.test(d),
+strip=d=>{let g=k=>d.match(RegExp("^a="+k+"(.+)","m"))?.[1],q=(d.match(/^a=candidate:.+$/gm)||[]).map(l=>l.split(" ")).find(c=>c[2]=="udp"&&!c[4].includes(":")),a=/^a=setup:active/m.test(d),
   f=[a?"a":"o",btoa(String.fromCharCode(...((g("fingerprint:sha-256 ")||"").replace(/:/g,"").match(/../g)||[]).map(x=>parseInt(x,16)))).replace(/=/g,""),...a?[]:[q?.[4],q?.[5]]];
   if(f.some(x=>!x))throw Error("SDP missing a field");return f.join("|")},
 unstrip=(s,[t,f,ip,pt]=s.split("|"))=>`v=0\no=- 1 2 IN IP4 0.0.0.0\ns=-\nt=0 0\nm=application 9 UDP/DTLS/SCTP webrtc-datachannel\na=ice-ufrag:abcd\na=ice-pwd:abcdefghijklmnopqrstuv\n`+
