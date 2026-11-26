@@ -3,19 +3,19 @@
 
 **Serverless multiplayer via webrtc/camera/barcode (*no* signal/stun/turn servers)**  
 
-This project is mainly about the serverless technique used and the sample game merely provides an end-to-end explanation.  
+This project is mainly about the serverless technique used and the sample game merely provides an end-to-end explanation  
 
 ---
 
-**Needs two Android Chrome phones on the same hotspot.**  
+**Needs two Android Chrome phones on the same hotspot**  
 
-After the camera/barcode `Handshake`, optionally paste your own game into the app and `Play` head-to-head with your family.  
-<br>
+After the camera/barcode `Handshake`, optionally paste your own game into the app and `Play` head-to-head with your family  
+
 [Try It](https://bacionejs.github.io/multiplayer) (includes sample game 🎮)
 
 ---
 
-**No server. No external dependencies.**  
+**No server. No external dependencies**  
 
 The source-code fits on a 3x5 card (excludes sample game)  
 
