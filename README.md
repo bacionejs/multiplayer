@@ -273,7 +273,7 @@ No. That needs STUN, and probably TURN, which are servers.
 **Can I write my own game?**
 Yes. See the game layer above. The sample game is a complete working example.
 
-## Appendix: the final `gather`, `strip` and `unstrip`
+## Appendix: `gather`, `strip` and `unstrip`
 
 These three functions live inside `handshake`.
 
