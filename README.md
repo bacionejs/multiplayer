@@ -68,23 +68,6 @@ The app hard-codes a **32x32** symbol (62 data codewords, 36 error-correction co
 
 ---
 
-## Game Layer and Sample Game
-
-Once connected, the UI provides `Handshake`, `Play`, and `Back`. Games run inside an iframe (black background, white monospace font, no `sandbox` attribute). Tapping `Play` sends the game source over the data channel so the other phone loads and runs it automatically. Tapping `Back` sends a `sys: "back"` message, runs any returned cleanup function, tears down the iframe, and returns to the game screen.
-
-A game can be written as a function or raw function body receiving `(link, side, area)`:
-
-* `link.send(obj)` sends a JSON object to the peer (avoiding the reserved `sys` property).
-* `link.on` handles incoming messages from the peer.
-* `link.ready(fn)` runs `fn` on both devices once both call `ready`.
-* `link.onclose` runs if the connection closes.
-* `side` is `"a"` or `"b"`, and `area` is `{w, h}`.
-* A fourth parameter `name="mygame"` on a `game` function saves the code under that name in `localStorage` (without overwriting the sample).
-
-The included sample game is a two-player light-cycles game running a deterministic simulation with 160 ms ticks and a two-tick input delay (sending input for tick `T+2` and advancing tick `T` once both inputs arrive).
-
----
-
 ## Security, Scope, and Limitations
 
 * **Transport & identity:** Data channel traffic is DTLS-encrypted, certificates are freshly generated per session, and peers verify the DTLS certificate fingerprint against the scanned barcode. Fixed ICE credentials are public in the code and only help identify connectivity checks.
@@ -95,15 +78,6 @@ The included sample game is a two-player light-cycles game running a determinist
 
 ---
 
-## Quick Reference
-
-| Term | Meaning |
-| --- | --- |
-| **SDP / Signaling** | Session Description Protocol text describing a WebRTC connection, and the exchange of that data between peers. |
-| **ICE / Host / Peer-reflexive** | Path-discovery process; a host candidate is a local IP/port, while a peer-reflexive candidate is learned from an incoming check's source. |
-| **STUN / TURN** | Servers for discovering public addresses or relaying traffic (not used here). |
-| **DTLS / Fingerprint** | Encryption layer under the data channel, authenticated by matching the certificate hash against the scanned fingerprint. |
-| **Codeword / Module / Quiet zone** | Data or error-correction byte in Data Matrix; single barcode cell; blank border around the symbol. |
 
 </details>
 
