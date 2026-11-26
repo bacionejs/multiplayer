@@ -9,7 +9,7 @@ This project is mainly about the serverless technique used and the sample game m
 
 **Needs two Android Chrome phones on the same hotspot**  
 
-After the camera/barcode `Handshake`, optionally paste your own game into the app and `Play` head-to-head with your family  
+After the camera/barcode `Handshake`, optionally paste your own game into the app and `Play` head-to-head with your family at home  
 
 [Try It](https://bacionejs.github.io/multiplayer) (includes sample game 🎮)
 
