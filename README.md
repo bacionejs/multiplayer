@@ -5,7 +5,7 @@
 
 This project is mainly about the serverless technique used and the sample game merely provides an end-to-end explanation  
 
-[Security](https://www.google.com/search?q=any+real+security+issues+in+serverless+DTLS+WebRTC+barcode+multiplayer+between+two+trusted+family+phones+on+a+private+hotspot+running+their+own+self-written+JS+game)
+[Security?](https://www.google.com/search?q=any+real+security+issues+in+serverless+DTLS+WebRTC+barcode+multiplayer+between+two+trusted+family+phones+on+a+private+hotspot+running+their+own+self-written+JS+game)
 
 ---
 
