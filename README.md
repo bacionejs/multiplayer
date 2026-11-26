@@ -93,6 +93,11 @@ A SHA-256 fingerprint in an SDP is 32 hex pairs separated by colons: 95 characte
 
 `unstrip` rebuilds a minimal SDP from the string: the `v=`, `o=`, `s=` and `t=` lines, one `m=application ... webrtc-datachannel` line, the ICE credentials, the fingerprint, the DTLS role, and a host candidate if an IP and port were sent.
 
+
+- `gather` waits for candidate gathering to finish (or 4 seconds), substitutes the fixed ICE credentials, and returns the compressed string.
+- `strip` extracts the role, the fingerprint (hex to bytes to unpadded base64), and for the offer the first non-IPv6 host candidate's IP and port. It throws if a required field is missing.
+- `unstrip` rebuilds the SDP. `2113937151` is the standard ICE priority for a host UDP candidate: (2^24 × 126) + (2^8 × 65535) + (256 − 1). The `(256+c.charCodeAt()).toString(16).slice(1)` trick pads each byte to two hex digits.
+
 ## Cutting it down
 
 I spent an extraordinary amount of time cutting this down, and the rule was simple: if the connection does not need it, it goes. Most of an SDP is boilerplate for features a data channel never uses, so most of it can be rebuilt on the receiving side instead of transmitted. What survives is the minimum: a role, a fingerprint, and for the offer an address.
@@ -111,7 +116,7 @@ With a cheap camera that has trouble focusing, it will scan the barcode faster.
 
 ## The Data Matrix encoder
 
-The encoder is original code. It implements the public Data Matrix standard and uses no outside software, so there is nothing to attribute or license.  
+A full encoder is rather large, whereas this minimal implementation, supporting ascii, is only 1k.
 
 Scanning uses the browser's `BarcodeDetector` with the `data_matrix` format.
 
@@ -273,22 +278,8 @@ No. That needs STUN, and probably TURN, which are servers.
 **Can I write my own game?**
 Yes. See the game layer above. The sample game is a complete working example.
 
-## Appendix: `gather`, `strip` and `unstrip`
 
-These three functions live inside `handshake`.
 
-```js
-gather=async(q,d)=>{let w=new Promise(f=>{q.onicecandidate=e=>e.candidate||f();setTimeout(f,4000)});await q.setLocalDescription({type:d.type,sdp:d.sdp.replace(/(ufrag:).+/,"$1abcd").replace(/(pwd:).+/,"$1abcdefghijklmnopqrstuv")});await w;return strip(q.localDescription.sdp)},
-strip=d=>{let g=k=>d.match(RegExp("^a="+k+"(.+)","m"))?.[1],q=(d.match(/^a=candidate:.+$/gm)||[]).map(l=>l.split(" ")).find(c=>!c[4].includes(":")),a=/^a=setup:active/m.test(d),
-  f=[a?"a":"o",btoa(String.fromCharCode(...((g("fingerprint:sha-256 ")||"").replace(/:/g,"").match(/../g)||[]).map(x=>parseInt(x,16)))).replace(/=/g,""),...a?[]:[q?.[4],q?.[5]]];
-  if(f.some(x=>!x))throw Error("SDP missing a field");return f.join("|")},
-unstrip=(s,[t,f,ip,pt]=s.split("|"))=>`v=0\no=- 1 2 IN IP4 0.0.0.0\ns=-\nt=0 0\nm=application 9 UDP/DTLS/SCTP webrtc-datachannel\na=ice-ufrag:abcd\na=ice-pwd:abcdefghijklmnopqrstuv\n`+
-  `a=fingerprint:sha-256 ${[...atob(f)].map(c=>(256+c.charCodeAt()).toString(16).slice(1)).join`:`}\na=setup:${t=="o"?"actpass":"active"}\n${ip?`a=candidate:1 1 udp 2113937151 ${ip} ${pt} typ host\n`:""}`,
-```
-
-- `gather` waits for candidate gathering to finish (or 4 seconds), substitutes the fixed ICE credentials, and returns the compressed string.
-- `strip` extracts the role, the fingerprint (hex to bytes to unpadded base64), and for the offer the first non-IPv6 host candidate's IP and port. It throws if a required field is missing.
-- `unstrip` rebuilds the SDP. `2113937151` is the standard ICE priority for a host UDP candidate: (2^24 × 126) + (2^8 × 65535) + (256 − 1). The `(256+c.charCodeAt()).toString(16).slice(1)` trick pads each byte to two hex digits.
 
 ## Glossary
 
