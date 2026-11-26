@@ -11,7 +11,7 @@ link.on=obj=>{}
 link.onclose to detect disconnects
 side = "a" or "b"
 area = {w,h}
-name is parsed by the caller for saving into indexedDB
+name is parsed by the caller for saving into localStorage
 */
 
 let ele=(t,p=document.body)=>p.appendChild(document.createElement(t))
