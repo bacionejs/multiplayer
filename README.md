@@ -15,8 +15,9 @@ After the camera/barcode `Handshake`, optionally paste your own game into the ap
 
 ---
 
+**No server. No external dependencies.**  
+
 The source-code fits on a 3x5 card (excludes sample game)  
-**No server. No external dependencies.**
 
 <a href="https://bacionejs.github.io/bacionejs/viewsource.html?file=https://raw.githubusercontent.com/bacionejs/multiplayer/main/index.html" target="_blank"><img width="200" src="https://github.com/user-attachments/assets/150c534f-3ecf-4232-a70e-7935570d3d05" /></a>
 
